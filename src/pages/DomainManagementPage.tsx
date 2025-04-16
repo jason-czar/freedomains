@@ -128,33 +128,47 @@ const DomainManagementPage = () => {
         ? nameservers.filter(ns => ns.trim() !== "") 
         : undefined;
       
-      // First, create the DNS record at Cloudflare
+      // Create DNS records directly through Cloudflare
       const { data: cfData, error: cfError } = await supabase.functions.invoke("domain-dns", {
         body: { 
           action: "create", 
           subdomain: newDomain.trim(),
           domain: domainSuffix,
-          nameservers: nsArray
+          nameservers: nsArray,
+          records: [
+            {
+              type: "A",
+              name: newDomain.trim(),
+              content: "76.76.21.21",
+              ttl: 1,
+              proxied: true
+            },
+            {
+              type: "TXT",
+              name: `_vercel.${newDomain.trim()}`,
+              content: "vc-domain-verify=verification-token", // This will be updated by Vercel
+              ttl: 1,
+              proxied: false
+            }
+          ]
         }
       });
       
       if (cfError) throw cfError;
       
       if (!cfData.success && !cfData.delegated) {
-        throw new Error("Failed to create DNS record: " + JSON.stringify(cfData.cloudflareResponse?.errors));
+        throw new Error("Failed to create DNS records: " + JSON.stringify(cfData.cloudflareResponse?.errors));
       }
       
-      // Then register the domain in our database
+      // Register in database
       const { error: dbError } = await supabase
         .from("domains")
         .insert({
           user_id: user.id,
           subdomain: newDomain.trim(),
           is_active: true,
-          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year expiry
+          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
           settings: {
-            dns_record_id: cfData.dnsRecord?.id,
-            cloudflare_record: cfData.dnsRecord,
             domain_suffix: domainSuffix,
             delegation_type: registrationType,
             nameservers: nsArray,
@@ -163,7 +177,7 @@ const DomainManagementPage = () => {
         });
       
       if (dbError) {
-        // If database insert fails, try to rollback the Cloudflare DNS record
+        // Rollback Cloudflare records if database insert fails
         await supabase.functions.invoke("domain-dns", {
           body: { 
             action: "delete", 
@@ -182,7 +196,7 @@ const DomainManagementPage = () => {
           duration: 10000,
         });
       } else {
-        toast.info(`Next step: Add ${newDomain}.${domainSuffix} to your Vercel project's domains`, {
+        toast.info(`Domain ${newDomain}.${domainSuffix} is ready to use. You can now manage DNS records through the DNS Manager.`, {
           duration: 10000,
         });
       }
