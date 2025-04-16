@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 40 30% 94%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -13,10 +13,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 262 80% 60%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 152 60% 60%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
@@ -32,22 +32,15 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.5rem;
+    --radius: 1.25rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -96,6 +89,49 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-clay-base/50 text-foreground;
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+}
+
+@layer components {
+  .clay-card {
+    @apply bg-white rounded-clay p-6 shadow-clay-md transition-all duration-300 hover:shadow-clay-lg;
+  }
+  
+  .clay-button {
+    @apply px-6 py-3 rounded-clay font-medium shadow-clay-button transition-all duration-300 transform hover:-translate-y-1 active:shadow-clay-button-pressed active:translate-y-0;
+  }
+  
+  .clay-button-primary {
+    @apply clay-button bg-clay-lavender text-indigo-700;
+  }
+  
+  .clay-button-secondary {
+    @apply clay-button bg-clay-mint text-green-700;
+  }
+  
+  .clay-button-accent {
+    @apply clay-button bg-clay-peach text-orange-700;
+  }
+  
+  .clay-input {
+    @apply bg-white rounded-clay px-4 py-2 shadow-clay-inner w-full focus:outline-none focus:ring-2 focus:ring-indigo-200;
+  }
+  
+  .clay-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .clay-nav-item {
+    @apply px-4 py-2 rounded-clay text-indigo-600 hover:bg-clay-lavender/50 transition-all duration-300;
+  }
+  
+  .clay-panel {
+    @apply bg-white/80 backdrop-blur-sm rounded-clay-lg p-8 shadow-clay-lg;
   }
 }
