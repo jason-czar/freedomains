@@ -87,9 +87,9 @@ serve(async (req) => {
         method: 'POST',
         headers: cloudflareHeaders,
         body: JSON.stringify({
-          type: 'CNAME',
+          type: 'A',
           name: `${subdomain}.com.channel`,
-          content: 'app.lovable.dev', // Point to your actual hosting server
+          content: '76.76.21.21', // Vercel's Edge Network IP
           ttl: 1, // Auto TTL
           proxied: true // Use Cloudflare proxy
         }),
