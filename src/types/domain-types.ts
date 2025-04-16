@@ -14,3 +14,17 @@ export interface DNSManagerProps {
   domainSuffix: string;
   onRefresh?: () => void;
 }
+
+export interface DNSRecord {
+  type: string;
+  name: string;
+  content: string;
+  ttl?: number;
+  priority?: number;
+  proxied?: boolean;
+  id?: string;
+}
+
+export interface ValidationError {
+  message: string;
+}
