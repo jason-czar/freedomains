@@ -36,7 +36,7 @@ serve(async (req) => {
   }
 
   try {
-    const { action, subdomain, domain } = await req.json();
+    const { action, subdomain, domain, nameservers } = await req.json();
     
     // Use domain if provided, otherwise default to com.channel
     const domainSuffix = domain || 'com.channel';
@@ -87,7 +87,48 @@ serve(async (req) => {
       );
     } 
     else if (action === 'create') {
-      // Create a new DNS record for the subdomain
+      // If nameservers are provided, create NS records for delegation
+      if (nameservers && Array.isArray(nameservers) && nameservers.length > 0) {
+        const nsRecords = [];
+        
+        // Create NS records for each nameserver
+        for (const ns of nameservers) {
+          const createNsUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records`;
+          
+          const nsResponse = await fetch(createNsUrl, {
+            method: 'POST',
+            headers: cloudflareHeaders,
+            body: JSON.stringify({
+              type: 'NS',
+              name: fullDomain,
+              content: ns,
+              ttl: 3600, // 1 hour TTL for nameservers
+              proxied: false // NS records cannot be proxied
+            }),
+          });
+
+          const nsData = await nsResponse.json();
+          nsRecords.push(nsData.result);
+          
+          console.log(`Created NS record for ${fullDomain} pointing to ${ns}:`, nsData);
+        }
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true,
+            fullDomain,
+            delegated: true,
+            nsRecords: nsRecords,
+            message: "Nameserver delegation completed"
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      // Default behavior: Create a new DNS record for the subdomain (A record)
       const createUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records`;
       
       const response = await fetch(createUrl, {
@@ -188,16 +229,20 @@ serve(async (req) => {
         );
       }
 
-      // Delete the record
-      const recordId = checkData.result[0].id;
-      const deleteUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records/${recordId}`;
-      
-      const deleteResponse = await fetch(deleteUrl, {
-        method: 'DELETE',
-        headers: cloudflareHeaders,
-      });
+      // Delete all records for this subdomain
+      const deleteResponses = [];
+      for (const record of checkData.result) {
+        const recordId = record.id;
+        const deleteUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records/${recordId}`;
+        
+        const deleteResponse = await fetch(deleteUrl, {
+          method: 'DELETE',
+          headers: cloudflareHeaders,
+        });
 
-      const deleteData = await deleteResponse.json();
+        const deleteData = await deleteResponse.json();
+        deleteResponses.push(deleteData);
+      }
       
       // Also delete the Vercel verification CNAME if it exists
       const vercelCheckUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records?name=_vercel.${fullDomain}`;
@@ -220,11 +265,12 @@ serve(async (req) => {
       
       return new Response(
         JSON.stringify({ 
-          success: deleteData.success,
-          cloudflareResponse: deleteData
+          success: true,
+          deletedRecords: deleteResponses.length,
+          responses: deleteResponses
         }),
         { 
-          status: deleteData.success ? 200 : 400, 
+          status: 200, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );

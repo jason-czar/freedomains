@@ -5,10 +5,11 @@ import Navbar from "@/components/navigation/navbar";
 import Footer from "@/components/navigation/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { PlusCircle, CheckCircle, XCircle, Loader2, Server } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DomainManagementPage = () => {
   const [domains, setDomains] = useState<any[]>([]);
@@ -18,6 +19,8 @@ const DomainManagementPage = () => {
   const [creatingDomain, setCreatingDomain] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [domainSuffix, setDomainSuffix] = useState("com.channel");
+  const [registrationType, setRegistrationType] = useState("standard");
+  const [nameservers, setNameservers] = useState<string[]>(["ns1.example.com", "ns2.example.com"]);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -116,18 +119,24 @@ const DomainManagementPage = () => {
     
     setCreatingDomain(true);
     try {
+      // Prepare nameservers if needed for delegation
+      const nsArray = registrationType === "delegated" 
+        ? nameservers.filter(ns => ns.trim() !== "") 
+        : undefined;
+      
       // First, create the DNS record at Cloudflare
       const { data: cfData, error: cfError } = await supabase.functions.invoke("domain-dns", {
         body: { 
           action: "create", 
           subdomain: newDomain.trim(),
-          domain: domainSuffix
+          domain: domainSuffix,
+          nameservers: nsArray
         }
       });
       
       if (cfError) throw cfError;
       
-      if (!cfData.success) {
+      if (!cfData.success && !cfData.delegated) {
         throw new Error("Failed to create DNS record: " + JSON.stringify(cfData.cloudflareResponse?.errors));
       }
       
@@ -142,7 +151,10 @@ const DomainManagementPage = () => {
           settings: {
             dns_record_id: cfData.dnsRecord?.id,
             cloudflare_record: cfData.dnsRecord,
-            domain_suffix: domainSuffix
+            domain_suffix: domainSuffix,
+            delegation_type: registrationType,
+            nameservers: nsArray,
+            delegated: registrationType === "delegated"
           }
         });
       
@@ -160,9 +172,17 @@ const DomainManagementPage = () => {
       }
       
       toast.success("Domain registered successfully!");
-      toast.info(`Next step: Add ${cfData.fullDomain} to your Vercel project's domains`, {
-        duration: 10000,
-      });
+      
+      if (registrationType === "delegated") {
+        toast.info(`Your domain ${newDomain}.${domainSuffix} has been delegated to your nameservers.`, {
+          duration: 10000,
+        });
+      } else {
+        toast.info(`Next step: Add ${newDomain}.${domainSuffix} to your Vercel project's domains`, {
+          duration: 10000,
+        });
+      }
+      
       setNewDomain("");
       setIsAvailable(null);
       fetchDomains();
@@ -231,9 +251,20 @@ const DomainManagementPage = () => {
     return `${domain.subdomain}.${suffix}`;
   };
 
-  const handleDomainSuffixChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setDomainSuffix(e.target.value);
-    setIsAvailable(null);
+  const handleNameserverChange = (index: number, value: string) => {
+    const newNameservers = [...nameservers];
+    newNameservers[index] = value;
+    setNameservers(newNameservers);
+  };
+
+  const addNameserver = () => {
+    setNameservers([...nameservers, ""]);
+  };
+
+  const removeNameserver = (index: number) => {
+    const newNameservers = [...nameservers];
+    newNameservers.splice(index, 1);
+    setNameservers(newNameservers);
   };
 
   return (
@@ -248,6 +279,68 @@ const DomainManagementPage = () => {
             
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4">Register New Domain</h3>
+              
+              <Tabs value={registrationType} onValueChange={setRegistrationType} className="mb-6">
+                <TabsList className="grid grid-cols-2 w-full max-w-md mb-4">
+                  <TabsTrigger value="standard">Standard Domain</TabsTrigger>
+                  <TabsTrigger value="delegated">Nameserver Delegation</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="standard">
+                  <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                    <p className="text-blue-800">
+                      <strong>Standard Domain:</strong> We'll create an A record pointing to Vercel. 
+                      You'll need to add this domain to your Vercel project settings.
+                    </p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="delegated">
+                  <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                    <p className="text-blue-800">
+                      <strong>Nameserver Delegation:</strong> We'll delegate this subdomain to your nameservers, 
+                      giving you full control over all DNS records. You'll need your own DNS hosting service 
+                      (like Cloudflare, AWS Route53, etc).
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-3 mb-4">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Nameservers (at least 2 recommended)
+                    </label>
+                    
+                    {nameservers.map((ns, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={ns}
+                          onChange={(e) => handleNameserverChange(index, e.target.value)}
+                          placeholder="ns1.example.com"
+                          className="flex-grow"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => removeNameserver(index)}
+                          disabled={nameservers.length <= 2}
+                        >
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={addNameserver}
+                      className="mt-2"
+                    >
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Add Nameserver
+                    </Button>
+                  </div>
+                </TabsContent>
+              </Tabs>
+              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -300,7 +393,8 @@ const DomainManagementPage = () => {
                   </Button>
                   <Button 
                     onClick={registerDomain} 
-                    disabled={!isAvailable || !validateDomainName(newDomain) || creatingDomain}
+                    disabled={!isAvailable || !validateDomainName(newDomain) || creatingDomain || 
+                      (registrationType === "delegated" && nameservers.filter(ns => ns.trim() !== "").length < 2)}
                     className="flex-1"
                   >
                     {creatingDomain ? (
@@ -336,6 +430,7 @@ const DomainManagementPage = () => {
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="py-3 text-left font-semibold text-gray-600">Domain</th>
+                        <th className="py-3 text-left font-semibold text-gray-600">Type</th>
                         <th className="py-3 text-left font-semibold text-gray-600">Status</th>
                         <th className="py-3 text-left font-semibold text-gray-600">Registered On</th>
                         <th className="py-3 text-left font-semibold text-gray-600">Expires On</th>
@@ -346,6 +441,19 @@ const DomainManagementPage = () => {
                       {domains.map((domain) => (
                         <tr key={domain.id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-4 font-medium">{getDomainDisplay(domain)}</td>
+                          <td className="py-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              domain.settings?.delegated 
+                                ? "bg-purple-100 text-purple-800" 
+                                : "bg-blue-100 text-blue-800"
+                            }`}>
+                              {domain.settings?.delegated ? (
+                                <><Server className="h-3 w-3 mr-1" /> Delegated</>
+                              ) : (
+                                "Standard"
+                              )}
+                            </span>
+                          </td>
                           <td className="py-4">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               domain.is_active 
@@ -390,12 +498,27 @@ const DomainManagementPage = () => {
             
             <div className="mt-8 p-4 bg-blue-50 rounded-lg">
               <h3 className="text-lg font-semibold text-blue-800 mb-2">Next Steps After Domain Registration</h3>
-              <ol className="list-decimal pl-5 space-y-2 text-blue-800">
-                <li>After registering your domain, you need to add it to your Vercel project.</li>
-                <li>Go to your Vercel project settings, find the "Domains" section, and add your new domain.</li>
-                <li>Vercel will automatically verify the domain (we've set up the verification CNAME for you).</li>
-                <li>Once verified, your domain will start working with your Vercel project.</li>
-              </ol>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-blue-800">For Standard Domains:</h4>
+                  <ol className="list-decimal pl-5 space-y-2 text-blue-800">
+                    <li>After registering your domain, you need to add it to your Vercel project.</li>
+                    <li>Go to your Vercel project settings, find the "Domains" section, and add your new domain.</li>
+                    <li>Vercel will automatically verify the domain (we've set up the verification CNAME for you).</li>
+                    <li>Once verified, your domain will start working with your Vercel project.</li>
+                  </ol>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-blue-800">For Delegated Domains:</h4>
+                  <ol className="list-decimal pl-5 space-y-2 text-blue-800">
+                    <li>After registering your delegated domain, DNS requests will be directed to your nameservers.</li>
+                    <li>Set up your DNS hosting service (Cloudflare, Route53, etc.) to recognize this domain.</li>
+                    <li>Add the required DNS records to your DNS hosting service to start receiving traffic.</li>
+                    <li>You have full control to set up websites, email services, or any other services on your domain.</li>
+                  </ol>
+                </div>
+              </div>
             </div>
           </div>
         </div>
