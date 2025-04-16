@@ -27,4 +27,11 @@ export interface DNSRecord {
 
 export interface ValidationError {
   message: string;
+  field?: string;
+  code?: string;
+}
+
+export interface DNSValidationResult {
+  isValid: boolean;
+  error: ValidationError | null;
 }

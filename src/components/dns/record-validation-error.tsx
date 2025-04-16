@@ -1,13 +1,17 @@
 
 import React from "react";
 import { AlertCircle } from "lucide-react";
+import { ValidationError as ValidationErrorType } from "@/types/domain-types";
 
 interface ValidationErrorProps {
-  message: string | null;
+  error: ValidationErrorType | null | string;
 }
 
-const ValidationError: React.FC<ValidationErrorProps> = ({ message }) => {
-  if (!message) return null;
+const ValidationError: React.FC<ValidationErrorProps> = ({ error }) => {
+  if (!error) return null;
+  
+  // Handle either string error message or ValidationError object
+  const message = typeof error === 'string' ? error : error.message;
   
   return (
     <div className="bg-red-50 border border-red-200 rounded-md p-3 text-red-700 text-sm flex items-start">

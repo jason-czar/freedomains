@@ -3,7 +3,7 @@ import React from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AddDNSRecordForm from "./add-dns-record-form";
-import { DNSRecord } from "./dns-record-table";
+import { DNSRecord } from "@/types/domain-types";
 
 interface AddRecordTabContentProps {
   subdomain: string;
@@ -27,36 +27,7 @@ const AddRecordTabContent: React.FC<AddRecordTabContentProps> = ({
   setActiveTab
 }) => {
   const handleAddRecord = async (newRecord: DNSRecord) => {
-    // Validate inputs
-    if (!newRecord.name && newRecord.name !== '@') {
-      toast.error("Please enter a record name");
-      return;
-    }
-    
-    if (!newRecord.content) {
-      toast.error("Please enter record content");
-      return;
-    }
-    
-    // Special validation for MX records
-    if (newRecord.type === "MX" && !newRecord.priority) {
-      toast.error("MX records require a priority value");
-      return;
-    }
-    
     try {
-      // Check if there's a duplicate record already
-      const existingRecord = existingRecords.find(r => 
-        r.type === newRecord.type && 
-        (r.name === newRecord.name || 
-         (r.name === fullDomain && newRecord.name === '@'))
-      );
-      
-      if (existingRecord && ['A', 'AAAA', 'CNAME'].includes(newRecord.type)) {
-        toast.error(`A ${newRecord.type} record with that name already exists. Delete it first or use a different name.`);
-        return;
-      }
-      
       setAdding(true);
       
       const { data, error } = await supabase.functions.invoke("domain-dns", {
