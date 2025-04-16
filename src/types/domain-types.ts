@@ -6,6 +6,18 @@ export interface DomainSettings {
     url?: string;
     type?: string;
   };
+  delegated?: boolean;
+  dns_active?: boolean;
+  dns_records?: any[];
+}
+
+export interface Domain {
+  id: string;
+  subdomain: string;
+  created_at: string;
+  expires_at: string;
+  is_active: boolean;
+  settings: DomainSettings;
 }
 
 export interface DNSManagerProps {
