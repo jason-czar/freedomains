@@ -36,7 +36,10 @@ serve(async (req) => {
   }
 
   try {
-    const { action, subdomain } = await req.json();
+    const { action, subdomain, domain } = await req.json();
+    
+    // Use domain if provided, otherwise default to com.channel
+    const domainSuffix = domain || 'com.channel';
 
     if (!action || !subdomain) {
       return new Response(
@@ -54,9 +57,12 @@ serve(async (req) => {
       'Authorization': `Bearer ${CLOUDFLARE_API_KEY}`,
     };
 
+    // Full domain to check/create (either subdomain.com.channel or subdomain.customdomain)
+    const fullDomain = `${subdomain}.${domainSuffix}`;
+
     if (action === 'check') {
       // Check if a DNS record already exists for this subdomain
-      const checkUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records?name=${subdomain}.com.channel`;
+      const checkUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records?name=${fullDomain}`;
       
       const response = await fetch(checkUrl, {
         method: 'GET',
@@ -71,6 +77,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           isAvailable,
+          fullDomain,
           cloudflareResponse: data
         }),
         { 
@@ -88,7 +95,7 @@ serve(async (req) => {
         headers: cloudflareHeaders,
         body: JSON.stringify({
           type: 'A',
-          name: `${subdomain}.com.channel`,
+          name: fullDomain,
           content: '76.76.21.21', // Vercel's Edge Network IP
           ttl: 1, // Auto TTL
           proxied: true // Use Cloudflare proxy
@@ -127,11 +134,30 @@ serve(async (req) => {
         
         console.log("SSL settings updated:", sslData);
         console.log("HTTPS settings updated:", httpsData);
+        
+        // Set up CNAME for Vercel verification
+        const vercelCnameUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records`;
+        
+        const vercelCnameResponse = await fetch(vercelCnameUrl, {
+          method: 'POST',
+          headers: cloudflareHeaders,
+          body: JSON.stringify({
+            type: 'CNAME',
+            name: `_vercel.${fullDomain}`,
+            content: 'cname.vercel-dns.com',
+            ttl: 1,
+            proxied: false
+          }),
+        });
+        
+        const vercelCnameData = await vercelCnameResponse.json();
+        console.log("Vercel verification CNAME added:", vercelCnameData);
       }
       
       return new Response(
         JSON.stringify({ 
           success: data.success,
+          fullDomain,
           dnsRecord: data.result,
           cloudflareResponse: data
         }),
@@ -143,7 +169,7 @@ serve(async (req) => {
     }
     else if (action === 'delete') {
       // First, find the record ID
-      const checkUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records?name=${subdomain}.com.channel`;
+      const checkUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records?name=${fullDomain}`;
       
       const checkResponse = await fetch(checkUrl, {
         method: 'GET',
@@ -172,6 +198,25 @@ serve(async (req) => {
       });
 
       const deleteData = await deleteResponse.json();
+      
+      // Also delete the Vercel verification CNAME if it exists
+      const vercelCheckUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records?name=_vercel.${fullDomain}`;
+      const vercelCheckResponse = await fetch(vercelCheckUrl, {
+        method: 'GET',
+        headers: cloudflareHeaders,
+      });
+      
+      const vercelCheckData = await vercelCheckResponse.json();
+      
+      if (vercelCheckData.success && vercelCheckData.result && vercelCheckData.result.length > 0) {
+        const vercelRecordId = vercelCheckData.result[0].id;
+        const vercelDeleteUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records/${vercelRecordId}`;
+        
+        await fetch(vercelDeleteUrl, {
+          method: 'DELETE',
+          headers: cloudflareHeaders,
+        });
+      }
       
       return new Response(
         JSON.stringify({ 

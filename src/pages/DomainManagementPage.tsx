@@ -17,6 +17,7 @@ const DomainManagementPage = () => {
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [creatingDomain, setCreatingDomain] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [domainSuffix, setDomainSuffix] = useState("com.channel");
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -75,7 +76,8 @@ const DomainManagementPage = () => {
       const { data, error } = await supabase.functions.invoke("domain-dns", {
         body: { 
           action: "check", 
-          subdomain: newDomain.trim() 
+          subdomain: newDomain.trim(),
+          domain: domainSuffix
         }
       });
       
@@ -84,7 +86,7 @@ const DomainManagementPage = () => {
       setIsAvailable(data.isAvailable);
       
       if (!data.isAvailable) {
-        toast.warning("This domain is already registered with Cloudflare");
+        toast.warning(`This domain is already registered: ${data.fullDomain}`);
       }
     } catch (error: any) {
       console.error("Error checking domain availability:", error.message);
@@ -118,7 +120,8 @@ const DomainManagementPage = () => {
       const { data: cfData, error: cfError } = await supabase.functions.invoke("domain-dns", {
         body: { 
           action: "create", 
-          subdomain: newDomain.trim() 
+          subdomain: newDomain.trim(),
+          domain: domainSuffix
         }
       });
       
@@ -138,7 +141,8 @@ const DomainManagementPage = () => {
           expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year expiry
           settings: {
             dns_record_id: cfData.dnsRecord?.id,
-            cloudflare_record: cfData.dnsRecord
+            cloudflare_record: cfData.dnsRecord,
+            domain_suffix: domainSuffix
           }
         });
       
@@ -147,7 +151,8 @@ const DomainManagementPage = () => {
         await supabase.functions.invoke("domain-dns", {
           body: { 
             action: "delete", 
-            subdomain: newDomain.trim() 
+            subdomain: newDomain.trim(),
+            domain: domainSuffix
           }
         });
         
@@ -155,6 +160,9 @@ const DomainManagementPage = () => {
       }
       
       toast.success("Domain registered successfully!");
+      toast.info(`Next step: Add ${cfData.fullDomain} to your Vercel project's domains`, {
+        duration: 10000,
+      });
       setNewDomain("");
       setIsAvailable(null);
       fetchDomains();
@@ -166,7 +174,7 @@ const DomainManagementPage = () => {
     }
   };
 
-  const handleDeleteDomain = async (domainId: string, subdomain: string) => {
+  const handleDeleteDomain = async (domainId: string, subdomain: string, domainSuffix: string = "com.channel") => {
     const confirmed = window.confirm("Are you sure you want to delete this domain? This action cannot be undone.");
     
     if (!confirmed) return;
@@ -176,7 +184,8 @@ const DomainManagementPage = () => {
       const { error: cfError } = await supabase.functions.invoke("domain-dns", {
         body: { 
           action: "delete", 
-          subdomain: subdomain 
+          subdomain: subdomain,
+          domain: domainSuffix
         }
       });
       
@@ -217,6 +226,16 @@ const DomainManagementPage = () => {
     }
   };
 
+  const getDomainDisplay = (domain: any) => {
+    const suffix = domain.settings?.domain_suffix || "com.channel";
+    return `${domain.subdomain}.${suffix}`;
+  };
+
+  const handleDomainSuffixChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setDomainSuffix(e.target.value);
+    setIsAvailable(null);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -242,7 +261,7 @@ const DomainManagementPage = () => {
                       onChange={handleNewDomainChange}
                     />
                     <span className="inline-flex items-center px-3 text-gray-500 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md">
-                      .com.channel
+                      .{domainSuffix}
                     </span>
                   </div>
                   <div className="mt-2 text-sm">
@@ -326,7 +345,7 @@ const DomainManagementPage = () => {
                     <tbody>
                       {domains.map((domain) => (
                         <tr key={domain.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 font-medium">{domain.subdomain}.com.channel</td>
+                          <td className="py-4 font-medium">{getDomainDisplay(domain)}</td>
                           <td className="py-4">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               domain.is_active 
@@ -355,7 +374,7 @@ const DomainManagementPage = () => {
                                 variant="outline"
                                 size="sm"
                                 className="text-red-600 hover:text-red-800"
-                                onClick={() => handleDeleteDomain(domain.id, domain.subdomain)}
+                                onClick={() => handleDeleteDomain(domain.id, domain.subdomain, domain.settings?.domain_suffix)}
                               >
                                 Delete
                               </Button>
@@ -367,6 +386,16 @@ const DomainManagementPage = () => {
                   </table>
                 </div>
               )}
+            </div>
+            
+            <div className="mt-8 p-4 bg-blue-50 rounded-lg">
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">Next Steps After Domain Registration</h3>
+              <ol className="list-decimal pl-5 space-y-2 text-blue-800">
+                <li>After registering your domain, you need to add it to your Vercel project.</li>
+                <li>Go to your Vercel project settings, find the "Domains" section, and add your new domain.</li>
+                <li>Vercel will automatically verify the domain (we've set up the verification CNAME for you).</li>
+                <li>Once verified, your domain will start working with your Vercel project.</li>
+              </ol>
             </div>
           </div>
         </div>
