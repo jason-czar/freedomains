@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Edit, Globe, Trash2, FileText, AlertCircle, Shield } from "lucide-react";
+import { PlusCircle, Edit, Globe, Trash2, FileText, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,7 +104,6 @@ const DomainsTab: React.FC<DomainsTabProps> = ({
                 <tr className="border-b border-gray-200">
                   <th className="py-3 text-left font-semibold text-gray-600">Domain</th>
                   <th className="py-3 text-left font-semibold text-gray-600">Status</th>
-                  <th className="py-3 text-left font-semibold text-gray-600">SSL</th>
                   <th className="py-3 text-left font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
@@ -134,9 +133,6 @@ const DomainsTab: React.FC<DomainsTabProps> = ({
                       }`}>
                         {domain.is_active ? "Active" : "Inactive"}
                       </span>
-                    </td>
-                    <td className="py-3">
-                      <Shield className="h-5 w-5 text-green-500" />
                     </td>
                     <td className="py-3">
                       <div className="flex space-x-2">
