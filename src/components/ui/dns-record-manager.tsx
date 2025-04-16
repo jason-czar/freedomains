@@ -12,6 +12,15 @@ import DNSEmptyState from "../dns/dns-empty-state";
 import DNSLoadingState from "../dns/dns-loading-state";
 import { NameserverManager } from "../domain/NameserverManager";
 
+interface DomainSettings {
+  domain_suffix?: string;
+  nameservers?: string[];
+  forwarding?: {
+    url?: string;
+    type?: string;
+  };
+}
+
 interface DNSRecordManagerProps {
   domainId: string;
   subdomain: string;
@@ -54,13 +63,16 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
       
       if (error) throw error;
       
-      if (data?.settings?.nameservers) {
-        setNameservers(data.settings.nameservers);
+      // Parse settings with proper type checking
+      const settings = data?.settings as DomainSettings | null;
+      
+      if (settings?.nameservers && Array.isArray(settings.nameservers)) {
+        setNameservers(settings.nameservers);
       }
       
-      if (data?.settings?.forwarding) {
-        setForwardingUrl(data.settings.forwarding.url || "");
-        setForwardingType(data.settings.forwarding.type || "301");
+      if (settings?.forwarding && typeof settings.forwarding === 'object') {
+        setForwardingUrl(settings.forwarding.url || "");
+        setForwardingType(settings.forwarding.type || "301");
       }
     } catch (error: any) {
       console.error("Error fetching domain settings:", error);
@@ -241,14 +253,14 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
       
       if (error) throw error;
       
-      // Update domain settings in database
+      // Update domain settings in database with proper typing
       const { error: updateError } = await supabase
         .from("domains")
         .update({
           settings: {
             domain_suffix: domainSuffix,
             nameservers: validNameservers
-          }
+          } as DomainSettings
         })
         .eq("id", domainId);
       
@@ -306,7 +318,7 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
       
       if (error) throw error;
       
-      // Update domain settings in database
+      // Update domain settings in database with proper typing
       const { error: updateError } = await supabase
         .from("domains")
         .update({
@@ -316,7 +328,7 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
               url: forwardingUrl.trim(),
               type: forwardingType
             }
-          }
+          } as DomainSettings
         })
         .eq("id", domainId);
       
