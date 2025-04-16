@@ -1,22 +1,28 @@
 
 import React, { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/navigation/navbar";
 import Footer from "@/components/navigation/footer";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn, user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   
-  // If user is already logged in, redirect to dashboard
+  // Get the redirect path from location state (set by ProtectedRoute)
+  const from = (location.state as { from?: string })?.from || "/dashboard";
+  
+  // If user is already logged in, redirect to intended destination
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={from} replace />;
   }
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,6 +35,9 @@ const LoginPage = () => {
       if (error) {
         console.error("Login error:", error);
         toast.error(error.message || "Failed to sign in. Please check your credentials.");
+      } else {
+        // On successful login, navigate to the intended destination
+        navigate(from);
       }
     } catch (error) {
       console.error("Unexpected error during login:", error);
@@ -47,6 +56,11 @@ const LoginPage = () => {
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold">Welcome Back</h1>
               <p className="text-gray-600 mt-2">Sign in to your account</p>
+              {from !== "/dashboard" && (
+                <p className="text-indigo-600 text-sm mt-2">
+                  You'll be redirected to your requested page after login
+                </p>
+              )}
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -102,7 +116,14 @@ const LoginPage = () => {
                 className="clay-button-primary w-full"
                 disabled={loading}
               >
-                {loading ? "Signing in..." : "Sign in"}
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
               </Button>
             </form>
             

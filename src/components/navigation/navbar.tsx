@@ -2,22 +2,41 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { X, Menu } from "lucide-react";
+import { X, Menu, User, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NavLink {
   title: string;
   href: string;
+  authRequired?: boolean;
+  guestOnly?: boolean;
 }
 
 const navLinks: NavLink[] = [
   { title: "Home", href: "/" },
   { title: "Features", href: "/features" },
   { title: "Pricing", href: "/pricing" },
-  { title: "Dashboard", href: "/dashboard" },
+  { title: "Dashboard", href: "/dashboard", authRequired: true },
 ];
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, signOut, profile } = useAuth();
+  
+  // Filter links based on authentication status
+  const filteredLinks = navLinks.filter(link => {
+    if (link.authRequired && !user) return false;
+    if (link.guestOnly && user) return false;
+    return true;
+  });
   
   return (
     <nav className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100">
@@ -33,7 +52,7 @@ const Navbar = () => {
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
-            {navLinks.map((link) => (
+            {filteredLinks.map((link) => (
               <Link
                 key={link.title}
                 to={link.href}
@@ -44,18 +63,57 @@ const Navbar = () => {
             ))}
           </div>
           
-          {/* Auth Buttons */}
+          {/* Auth Buttons or User Menu */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/login">
-              <Button variant="ghost" className="clay-button bg-white text-indigo-600">
-                Log in
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button className="clay-button-primary">
-                Sign up
-              </Button>
-            </Link>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="clay-button bg-white relative h-10 w-10 rounded-full">
+                    {profile?.avatar_url ? (
+                      <img 
+                        src={profile.avatar_url} 
+                        alt={profile.full_name} 
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <User className="h-4 w-4 text-indigo-600" />
+                      </div>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>
+                    {profile?.full_name || "My Account"}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings">Account Settings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" className="clay-button bg-white text-indigo-600">
+                    Log in
+                  </Button>
+                </Link>
+                <Link to="/signup">
+                  <Button className="clay-button-primary">
+                    Sign up
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
           
           {/* Mobile menu button */}
@@ -77,7 +135,7 @@ const Navbar = () => {
       {mobileMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 clay-container">
-            {navLinks.map((link) => (
+            {filteredLinks.map((link) => (
               <Link
                 key={link.title}
                 to={link.href}
@@ -87,18 +145,54 @@ const Navbar = () => {
                 {link.title}
               </Link>
             ))}
-            <div className="flex flex-col space-y-2 mt-4">
-              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="ghost" className="clay-button bg-white text-indigo-600 w-full">
-                  Log in
+            
+            {user ? (
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="flex items-center px-3 py-2">
+                  {profile?.avatar_url ? (
+                    <img 
+                      src={profile.avatar_url} 
+                      alt={profile.full_name} 
+                      className="h-8 w-8 rounded-full object-cover mr-2"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2">
+                      <User className="h-4 w-4 text-indigo-600" />
+                    </div>
+                  )}
+                  <span className="font-medium">{profile?.full_name || user.email}</span>
+                </div>
+                <Link to="/settings" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" className="clay-button bg-white text-indigo-600 w-full justify-start mt-2">
+                    Account Settings
+                  </Button>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  className="clay-button bg-white text-red-600 w-full justify-start mt-2"
+                  onClick={() => {
+                    signOut();
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>Log out</span>
                 </Button>
-              </Link>
-              <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="clay-button-primary w-full">
-                  Sign up
-                </Button>
-              </Link>
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-col space-y-2 mt-4 border-t border-gray-200 pt-4">
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" className="clay-button bg-white text-indigo-600 w-full">
+                    Log in
+                  </Button>
+                </Link>
+                <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
+                  <Button className="clay-button-primary w-full">
+                    Sign up
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

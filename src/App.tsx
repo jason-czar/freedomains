@@ -15,6 +15,7 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 import DomainManagementPage from "./pages/DomainManagementPage";
+import SettingsPage from "./pages/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
                 <DomainManagementPage />
               </ProtectedRoute>
             } />
+            <Route path="/settings" element={<SettingsPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
