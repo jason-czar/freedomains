@@ -5,11 +5,13 @@ import Footer from "@/components/navigation/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, Shield, Settings, CreditCard, PlusCircle, ExternalLink, Edit, Trash2, LineChart, FileText, AlertCircle } from "lucide-react";
+import { Globe, Shield, Settings, CreditCard, PlusCircle, ExternalLink, Edit, Trash2, LineChart, FileText, AlertCircle, Server } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LandingPageBuilder from "@/components/ui/landing-page-builder";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import DNSRecordManager from "@/components/ui/dns-record-manager";
 
 const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState("domains");
@@ -17,6 +19,8 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+  const [dnsModalOpen, setDnsModalOpen] = useState(false);
+  const [selectedDomainForDNS, setSelectedDomainForDNS] = useState<any>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -82,7 +86,12 @@ const DashboardPage = () => {
       toast.error("Failed to delete domain");
     }
   };
-  
+
+  const openDnsManager = (domain: any) => {
+    setSelectedDomainForDNS(domain);
+    setDnsModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -278,7 +287,7 @@ const DashboardPage = () => {
                               <tr key={domain.id} className="border-b border-gray-100 hover:bg-gray-50">
                                 <td className="py-3 font-medium">
                                   <div className="flex items-center">
-                                    {domain.subdomain}.com.channel
+                                    {domain.subdomain}.{domain.settings?.domain_suffix || "com.channel"}
                                     {domain.settings?.dns_record_id ? (
                                       <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
                                         DNS Active
@@ -306,21 +315,25 @@ const DashboardPage = () => {
                                 <td className="py-3">{new Date(domain.created_at).toLocaleDateString()}</td>
                                 <td className="py-3">
                                   <div className="flex space-x-2">
-                                    <button 
-                                      className="text-gray-500 hover:text-indigo-600"
-                                      onClick={() => window.open(`https://${domain.subdomain}.com.channel`, '_blank')}
-                                    >
-                                      <ExternalLink className="h-5 w-5" />
-                                    </button>
-                                    <button 
-                                      className="text-gray-500 hover:text-indigo-600"
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
                                       onClick={() => {
                                         setSelectedDomain(domain.id);
                                         setActiveTab("editor");
                                       }}
                                     >
-                                      <Edit className="h-5 w-5" />
-                                    </button>
+                                      <Edit className="h-4 w-4 mr-1" />
+                                      Manage
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openDnsManager(domain)}
+                                    >
+                                      <Globe className="h-4 w-4 mr-1" />
+                                      DNS
+                                    </Button>
                                     <button 
                                       className="text-gray-500 hover:text-red-600"
                                       onClick={() => handleDeleteDomain(domain.id, domain.subdomain)}
@@ -658,6 +671,24 @@ const DashboardPage = () => {
           </div>
         </div>
       </main>
+      
+      <Dialog open={dnsModalOpen} onOpenChange={setDnsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>DNS Management</DialogTitle>
+          </DialogHeader>
+          
+          {selectedDomainForDNS && (
+            <DNSRecordManager 
+              domainId={selectedDomainForDNS.id}
+              subdomain={selectedDomainForDNS.subdomain}
+              domainSuffix={selectedDomainForDNS.settings?.domain_suffix || "com.channel"}
+              onRefresh={fetchDomains}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      
       <Footer />
     </div>
   );
