@@ -1,45 +1,76 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/navigation/navbar";
 import Footer from "@/components/navigation/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, Shield, Settings, CreditCard, PlusCircle, ExternalLink, Edit, Trash2, LineChart, FileText } from "lucide-react";
-
-// Placeholder subdomain data
-const subdomains = [
-  {
-    id: 1,
-    name: "myblog.com.channel",
-    status: "active",
-    ssl: true,
-    type: "landing",
-    traffic: 1240,
-    created: "2023-04-15",
-  },
-  {
-    id: 2,
-    name: "portfolio.com.channel",
-    status: "active",
-    ssl: true,
-    type: "redirect",
-    traffic: 856,
-    created: "2023-06-22",
-  },
-  {
-    id: 3,
-    name: "store.com.channel",
-    status: "pending",
-    ssl: false,
-    type: "landing",
-    traffic: 0,
-    created: "2023-08-10",
-  },
-];
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import LandingPageBuilder from "@/components/ui/landing-page-builder";
 
 const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState("domains");
+  const [domains, setDomains] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (user) {
+      fetchDomains();
+    }
+    
+    const domainId = searchParams.get('domain');
+    if (domainId) {
+      setSelectedDomain(domainId);
+      setActiveTab('editor');
+    }
+  }, [user, searchParams]);
+
+  const fetchDomains = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("domains")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      
+      setDomains(data || []);
+    } catch (error: any) {
+      console.error("Error fetching domains:", error.message);
+      toast.error("Failed to load domains");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteDomain = async (domainId: string) => {
+    const confirmed = window.confirm("Are you sure you want to delete this domain? This action cannot be undone.");
+    
+    if (!confirmed) return;
+    
+    try {
+      const { error } = await supabase
+        .from("domains")
+        .delete()
+        .eq("id", domainId);
+      
+      if (error) throw error;
+      
+      toast.success("Domain deleted successfully");
+      fetchDomains();
+    } catch (error: any) {
+      console.error("Error deleting domain:", error.message);
+      toast.error("Failed to delete domain");
+    }
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -52,10 +83,12 @@ const DashboardPage = () => {
               <div className="clay-card">
                 <div className="flex items-center space-x-4 mb-6">
                   <div className="h-12 w-12 rounded-full bg-clay-lavender flex items-center justify-center">
-                    <span className="text-lg font-bold text-indigo-800">JD</span>
+                    <span className="text-lg font-bold text-indigo-800">
+                      {user?.email?.charAt(0).toUpperCase() || "U"}
+                    </span>
                   </div>
                   <div>
-                    <h3 className="font-semibold">John Doe</h3>
+                    <h3 className="font-semibold">{user?.email?.split('@')[0] || "User"}</h3>
                     <p className="text-sm text-gray-600">Professional Plan</p>
                   </div>
                 </div>
@@ -71,6 +104,27 @@ const DashboardPage = () => {
                   >
                     <Globe className="h-5 w-5 mr-3" />
                     Domains
+                  </button>
+                  <button 
+                    className={`w-full py-2 px-3 rounded-lg flex items-center ${
+                      activeTab === "editor" 
+                        ? "bg-clay-lavender/50 text-indigo-700 font-medium" 
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                    onClick={() => {
+                      if (selectedDomain || domains.length > 0) {
+                        setActiveTab("editor");
+                        if (!selectedDomain && domains.length > 0) {
+                          setSelectedDomain(domains[0].id);
+                        }
+                      } else {
+                        toast.error("You need to register a domain first");
+                        navigate("/domains");
+                      }
+                    }}
+                  >
+                    <Edit className="h-5 w-5 mr-3" />
+                    Page Editor
                   </button>
                   <button 
                     className={`w-full py-2 px-3 rounded-lg flex items-center ${
@@ -125,10 +179,13 @@ const DashboardPage = () => {
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span>Domains</span>
-                      <span className="font-medium">2/5</span>
+                      <span className="font-medium">{domains.length}/5</span>
                     </div>
                     <div className="h-2 bg-white rounded-full overflow-hidden">
-                      <div className="h-full bg-green-500 rounded-full" style={{ width: "40%" }}></div>
+                      <div 
+                        className="h-full bg-green-500 rounded-full" 
+                        style={{ width: `${Math.min((domains.length / 5) * 100, 100)}%` }}
+                      ></div>
                     </div>
                   </div>
                   <div>
@@ -160,7 +217,7 @@ const DashboardPage = () => {
                   <div className="clay-card mb-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                       <h2 className="text-2xl font-bold">Your Domains</h2>
-                      <Button className="clay-button-primary">
+                      <Button className="clay-button-primary" onClick={() => navigate("/domains")}>
                         <PlusCircle className="h-5 w-5 mr-2" />
                         Register New Domain
                       </Button>
@@ -180,60 +237,81 @@ const DashboardPage = () => {
                       </div>
                     </div>
                     
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="py-3 text-left font-semibold text-gray-600">Domain</th>
-                            <th className="py-3 text-left font-semibold text-gray-600">Status</th>
-                            <th className="py-3 text-left font-semibold text-gray-600">Type</th>
-                            <th className="py-3 text-left font-semibold text-gray-600">SSL</th>
-                            <th className="py-3 text-left font-semibold text-gray-600">Traffic</th>
-                            <th className="py-3 text-left font-semibold text-gray-600">Created</th>
-                            <th className="py-3 text-left font-semibold text-gray-600">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {subdomains.map((domain) => (
-                            <tr key={domain.id} className="border-b border-gray-100 hover:bg-gray-50">
-                              <td className="py-3 font-medium">{domain.name}</td>
-                              <td className="py-3">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  domain.status === "active" 
-                                    ? "bg-green-100 text-green-800" 
-                                    : "bg-yellow-100 text-yellow-800"
-                                }`}>
-                                  {domain.status}
-                                </span>
-                              </td>
-                              <td className="py-3">{domain.type}</td>
-                              <td className="py-3">
-                                {domain.ssl ? (
-                                  <Shield className="h-5 w-5 text-green-500" />
-                                ) : (
-                                  <span className="text-sm text-gray-500">-</span>
-                                )}
-                              </td>
-                              <td className="py-3">{domain.traffic.toLocaleString()}</td>
-                              <td className="py-3">{domain.created}</td>
-                              <td className="py-3">
-                                <div className="flex space-x-2">
-                                  <button className="text-gray-500 hover:text-indigo-600">
-                                    <ExternalLink className="h-5 w-5" />
-                                  </button>
-                                  <button className="text-gray-500 hover:text-indigo-600">
-                                    <Edit className="h-5 w-5" />
-                                  </button>
-                                  <button className="text-gray-500 hover:text-red-600">
-                                    <Trash2 className="h-5 w-5" />
-                                  </button>
-                                </div>
-                              </td>
+                    {loading ? (
+                      <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+                      </div>
+                    ) : domains.length === 0 ? (
+                      <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">You don't have any domains registered yet.</p>
+                        <Button 
+                          variant="link" 
+                          className="text-indigo-600"
+                          onClick={() => navigate("/domains")}
+                        >
+                          Register your first domain
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="py-3 text-left font-semibold text-gray-600">Domain</th>
+                              <th className="py-3 text-left font-semibold text-gray-600">Status</th>
+                              <th className="py-3 text-left font-semibold text-gray-600">SSL</th>
+                              <th className="py-3 text-left font-semibold text-gray-600">Created</th>
+                              <th className="py-3 text-left font-semibold text-gray-600">Actions</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody>
+                            {domains.map((domain) => (
+                              <tr key={domain.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                <td className="py-3 font-medium">{domain.subdomain}.com.channel</td>
+                                <td className="py-3">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    domain.is_active 
+                                      ? "bg-green-100 text-green-800" 
+                                      : "bg-yellow-100 text-yellow-800"
+                                  }`}>
+                                    {domain.is_active ? "Active" : "Inactive"}
+                                  </span>
+                                </td>
+                                <td className="py-3">
+                                  <Shield className="h-5 w-5 text-green-500" />
+                                </td>
+                                <td className="py-3">{new Date(domain.created_at).toLocaleDateString()}</td>
+                                <td className="py-3">
+                                  <div className="flex space-x-2">
+                                    <button 
+                                      className="text-gray-500 hover:text-indigo-600"
+                                      onClick={() => window.open(`https://${domain.subdomain}.com.channel`, '_blank')}
+                                    >
+                                      <ExternalLink className="h-5 w-5" />
+                                    </button>
+                                    <button 
+                                      className="text-gray-500 hover:text-indigo-600"
+                                      onClick={() => {
+                                        setSelectedDomain(domain.id);
+                                        setActiveTab("editor");
+                                      }}
+                                    >
+                                      <Edit className="h-5 w-5" />
+                                    </button>
+                                    <button 
+                                      className="text-gray-500 hover:text-red-600"
+                                      onClick={() => handleDeleteDomain(domain.id)}
+                                    >
+                                      <Trash2 className="h-5 w-5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -241,7 +319,7 @@ const DashboardPage = () => {
                       <h3 className="font-semibold text-lg mb-4">Quick Stats</h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="clay-card bg-clay-lavender/40">
-                          <div className="text-2xl font-bold">3</div>
+                          <div className="text-2xl font-bold">{domains.length}</div>
                           <div className="text-gray-600">Total Domains</div>
                         </div>
                         <div className="clay-card bg-clay-mint/40">
@@ -249,39 +327,48 @@ const DashboardPage = () => {
                           <div className="text-gray-600">Total Traffic</div>
                         </div>
                         <div className="clay-card bg-clay-blue/40">
-                          <div className="text-2xl font-bold">2</div>
+                          <div className="text-2xl font-bold">{domains.length}</div>
                           <div className="text-gray-600">SSL Certificates</div>
                         </div>
                         <div className="clay-card bg-clay-peach/40">
-                          <div className="text-2xl font-bold">1</div>
-                          <div className="text-gray-600">Pending</div>
+                          <div className="text-2xl font-bold">
+                            {domains.filter(d => !d.is_active).length}
+                          </div>
+                          <div className="text-gray-600">Inactive</div>
                         </div>
                       </div>
                     </div>
                     
                     <div className="clay-card">
                       <h3 className="font-semibold text-lg mb-4">Recent Activity</h3>
-                      <div className="space-y-4">
-                        {[
-                          { action: "Domain registered", domain: "myblog.com.channel", time: "2 days ago" },
-                          { action: "SSL certificate renewed", domain: "portfolio.com.channel", time: "1 week ago" },
-                          { action: "Redirect updated", domain: "portfolio.com.channel", time: "1 week ago" },
-                          { action: "Landing page edited", domain: "myblog.com.channel", time: "2 weeks ago" }
-                        ].map((activity, index) => (
-                          <div key={index} className="flex items-start">
-                            <div className="h-8 w-8 rounded-full bg-clay-lavender/40 flex-shrink-0 flex items-center justify-center mr-3">
-                              <FileText className="h-4 w-4 text-indigo-600" />
+                      {domains.length === 0 ? (
+                        <div className="text-center py-8">
+                          <p className="text-gray-500">No recent activity</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {domains.slice(0, 4).map((domain, index) => (
+                            <div key={index} className="flex items-start">
+                              <div className="h-8 w-8 rounded-full bg-clay-lavender/40 flex-shrink-0 flex items-center justify-center mr-3">
+                                <FileText className="h-4 w-4 text-indigo-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium">Domain registered</p>
+                                <p className="text-sm text-gray-600">
+                                  {domain.subdomain}.com.channel • {new Date(domain.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium">{activity.action}</p>
-                              <p className="text-sm text-gray-600">{activity.domain} • {activity.time}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
+              )}
+              
+              {activeTab === "editor" && selectedDomain && (
+                <LandingPageBuilder />
               )}
               
               {activeTab === "ssl" && (
@@ -291,7 +378,6 @@ const DashboardPage = () => {
                     Manage SSL certificates for your domains. All certificates are automatically renewed 30 days before expiration.
                   </p>
                   
-                  {/* SSL content would go here */}
                   <div className="bg-clay-mint/30 rounded-clay p-4 text-center py-12">
                     <Shield className="h-16 w-16 text-green-500 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold mb-2">All Your Domains Are Secured</h3>

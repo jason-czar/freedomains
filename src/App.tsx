@@ -13,6 +13,7 @@ import PricingPage from "./pages/PricingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
+import DomainManagementPage from "./pages/DomainManagementPage";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,11 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/domains" element={
+              <ProtectedRoute>
+                <DomainManagementPage />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
