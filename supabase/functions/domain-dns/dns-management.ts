@@ -10,20 +10,65 @@ export async function listRecords(
   apiKey: string
 ) {
   const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
-  const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${fullDomain}`;
   
-  const response = await fetch(listUrl, {
-    method: 'GET',
-    headers: getCloudflareHeaders(apiKey),
-  });
+  try {
+    // First, check if the subdomain exists by querying for its A or CNAME record
+    const checkUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${fullDomain}&type=A,CNAME`;
+    
+    const checkResponse = await fetch(checkUrl, {
+      method: 'GET',
+      headers: getCloudflareHeaders(apiKey),
+    });
 
-  const data = await response.json();
-  
-  return formatResponse({ 
-    success: data.success,
-    records: data.result,
-    fullDomain
-  }, data.success ? 200 : 400);
+    const checkData = await checkResponse.json();
+    
+    if (!checkData.success) {
+      return errorResponse('Failed to check domain existence');
+    }
+    
+    if (!checkData.result || checkData.result.length === 0) {
+      return formatResponse({ 
+        success: true,
+        records: [],
+        fullDomain,
+        message: "Domain does not exist or has no A/CNAME records"
+      });
+    }
+    
+    // Domain exists, now get all its records
+    // We need to query using a wildcard to get all records for this domain and its subdomains
+    const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?per_page=100`;
+    
+    const response = await fetch(listUrl, {
+      method: 'GET',
+      headers: getCloudflareHeaders(apiKey),
+    });
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      return errorResponse('Failed to fetch DNS records');
+    }
+    
+    // Filter to only include records for this domain and its subdomains
+    const filteredRecords = data.result.filter((record: any) => {
+      // Match exact domain or subdomains
+      return record.name === fullDomain || 
+             record.name.endsWith(`.${fullDomain}`) ||
+             (fullDomain === domainSuffix && !record.name.includes('.'));
+    });
+    
+    console.log(`Found ${filteredRecords.length} DNS records for ${fullDomain}`);
+    
+    return formatResponse({ 
+      success: true,
+      records: filteredRecords,
+      fullDomain
+    });
+  } catch (error) {
+    console.error('Error listing DNS records:', error);
+    return errorResponse(error.message || 'Failed to list DNS records');
+  }
 }
 
 export async function deleteDomain(
@@ -96,13 +141,42 @@ export async function addRecord(
   const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
   const results = [];
   
+  // First check if there are any conflicting records
   for (const record of records) {
-    if (!record.type || !record.name || !record.content) {
+    if (!record.type || (!record.name && record.name !== '@') || !record.content) {
       results.push({
         success: false,
         error: 'Missing required fields in record (type, name, content)'
       });
       continue;
+    }
+    
+    // Prepare the name for checking conflicts
+    let recordName = record.name;
+    if (record.name === '@') {
+      recordName = fullDomain;
+    } else if (!record.name.includes('.')) {
+      recordName = `${record.name}.${fullDomain}`;
+    }
+    
+    // Check for existing conflicting records
+    if (['A', 'AAAA', 'CNAME'].includes(record.type)) {
+      const checkUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${recordName}&type=${record.type}`;
+      const checkResponse = await fetch(checkUrl, {
+        method: 'GET',
+        headers: getCloudflareHeaders(apiKey),
+      });
+      
+      const checkData = await checkResponse.json();
+      
+      if (checkData.success && checkData.result && checkData.result.length > 0) {
+        results.push({
+          success: false,
+          error: `A ${record.type} record with name ${recordName} already exists`,
+          existingRecord: checkData.result[0]
+        });
+        continue;
+      }
     }
     
     const recordData: DNSRecord = {
@@ -168,7 +242,7 @@ export async function addRecord(
   }
   
   return formatResponse({ 
-    success: results.every(r => r.success),
+    success: results.some(r => r.success),
     results,
     fullDomain
   });

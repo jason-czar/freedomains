@@ -13,12 +13,14 @@ interface AddDNSRecordFormProps {
   fullDomain: string;
   adding: boolean;
   onAddRecord: (record: DNSRecord) => void;
+  existingRecords?: DNSRecord[];
 }
 
 const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
   fullDomain,
   adding,
-  onAddRecord
+  onAddRecord,
+  existingRecords = []
 }) => {
   const [newRecord, setNewRecord] = useState<DNSRecord>({
     type: "A",
@@ -28,7 +30,83 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
     proxied: true,
   });
 
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const validateRecord = (): boolean => {
+    // Check for duplicate records
+    if (['A', 'AAAA', 'CNAME'].includes(newRecord.type)) {
+      const nameToCheck = newRecord.name === "" || newRecord.name === "@" 
+                          ? fullDomain 
+                          : `${newRecord.name}.${fullDomain}`;
+      
+      const duplicateRecord = existingRecords.find(record => 
+        (record.type === newRecord.type) && 
+        (record.name === nameToCheck || 
+         (record.name === fullDomain && (newRecord.name === "" || newRecord.name === "@")))
+      );
+      
+      if (duplicateRecord) {
+        setValidationError(`A ${newRecord.type} record with this name already exists. Please delete it first or use a different name.`);
+        return false;
+      }
+    }
+    
+    // CNAME validation
+    if (newRecord.type === "CNAME") {
+      // Cannot create CNAME record for root domain if A/AAAA record exists
+      if (newRecord.name === "" || newRecord.name === "@") {
+        if (existingRecords.some(r => (r.type === "A" || r.type === "AAAA") && 
+            (r.name === fullDomain || r.name === "@"))) {
+          setValidationError("Cannot create a CNAME record for the root domain when A or AAAA records exist.");
+          return false;
+        }
+      }
+      
+      // Prevent CNAME loops
+      if (newRecord.content === fullDomain ||
+          newRecord.content === `${newRecord.name}.${fullDomain}`) {
+        setValidationError("CNAME cannot point to itself.");
+        return false;
+      }
+    }
+    
+    // Validate specific record types
+    if (newRecord.type === "AAAA" && !isValidIPv6(newRecord.content)) {
+      setValidationError("Please enter a valid IPv6 address.");
+      return false;
+    }
+    
+    if (newRecord.type === "A" && !isValidIPv4(newRecord.content)) {
+      setValidationError("Please enter a valid IPv4 address.");
+      return false;
+    }
+    
+    // MX record validation
+    if (newRecord.type === "MX" && !newRecord.priority) {
+      setValidationError("MX records require a priority value.");
+      return false;
+    }
+    
+    setValidationError(null);
+    return true;
+  };
+
+  const isValidIPv4 = (ip: string): boolean => {
+    const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    if (!ipv4Regex.test(ip)) return false;
+    
+    const parts = ip.split('.');
+    return parts.every(part => parseInt(part) >= 0 && parseInt(part) <= 255);
+  };
+  
+  const isValidIPv6 = (ip: string): boolean => {
+    // Basic IPv6 validation
+    return /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^::1$|^([0-9a-fA-F]{1,4}::?){1,7}[0-9a-fA-F]{1,4}$/.test(ip);
+  };
+
   const handleAddRecord = () => {
+    if (!validateRecord()) return;
+    
     // Format name field properly
     const formattedRecord = {...newRecord};
     
@@ -79,7 +157,15 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <DNSRecordTypeSelect
           value={newRecord.type}
-          onValueChange={(value) => setNewRecord({...newRecord, type: value})}
+          onValueChange={(value) => {
+            setNewRecord({
+              ...newRecord, 
+              type: value,
+              // Reset proxied flag for records that don't support it
+              proxied: ['A', 'AAAA', 'CNAME'].includes(value) ? true : false
+            });
+            setValidationError(null);
+          }}
         />
         
         <div>
@@ -90,7 +176,10 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
             <Input
               placeholder={newRecord.type === "MX" ? "mail" : "www"}
               value={newRecord.name}
-              onChange={(e) => setNewRecord({...newRecord, name: e.target.value})}
+              onChange={(e) => {
+                setNewRecord({...newRecord, name: e.target.value});
+                setValidationError(null);
+              }}
             />
             <span className="inline-flex items-center px-3 text-gray-500 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md">
               .{fullDomain}
@@ -108,7 +197,10 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
           <Input
             placeholder={getContentPlaceholder()}
             value={newRecord.content}
-            onChange={(e) => setNewRecord({...newRecord, content: e.target.value})}
+            onChange={(e) => {
+              setNewRecord({...newRecord, content: e.target.value});
+              setValidationError(null);
+            }}
           />
           {newRecord.type === "A" && (
             <p className="text-xs text-gray-500 mt-1">
@@ -126,14 +218,20 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
               type="number"
               placeholder="10"
               value={newRecord.priority || ""}
-              onChange={(e) => setNewRecord({...newRecord, priority: parseInt(e.target.value) || 0})}
+              onChange={(e) => {
+                setNewRecord({...newRecord, priority: parseInt(e.target.value) || 0});
+                setValidationError(null);
+              }}
             />
           </div>
         )}
         
         <TTLSelect
           value={String(newRecord.ttl || 1)}
-          onValueChange={(value) => setNewRecord({...newRecord, ttl: parseInt(value)})}
+          onValueChange={(value) => {
+            setNewRecord({...newRecord, ttl: parseInt(value)});
+            setValidationError(null);
+          }}
         />
         
         {(newRecord.type === "A" || newRecord.type === "AAAA" || newRecord.type === "CNAME") && (
@@ -143,7 +241,10 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
             </Label>
             <Switch
               checked={!!newRecord.proxied}
-              onCheckedChange={(checked) => setNewRecord({...newRecord, proxied: checked})}
+              onCheckedChange={(checked) => {
+                setNewRecord({...newRecord, proxied: checked});
+                setValidationError(null);
+              }}
             />
             <div className="text-xs text-gray-500">
               {newRecord.proxied 
@@ -154,6 +255,13 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
           </div>
         )}
       </div>
+      
+      {validationError && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-3 text-red-700 text-sm flex items-start">
+          <AlertCircle className="h-5 w-5 mt-0.5 mr-2 flex-shrink-0" />
+          <div>{validationError}</div>
+        </div>
+      )}
       
       <div className="flex items-center mt-4 pt-4 border-t border-gray-200">
         <div className="flex-1 text-sm text-gray-500">

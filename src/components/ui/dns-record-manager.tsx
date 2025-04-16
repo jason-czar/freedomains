@@ -51,7 +51,14 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
       if (error) throw error;
       
       if (data.success) {
-        setRecords(data.records || []);
+        // Filter and process records to make them more readable
+        const processedRecords = (data.records || []).map((record: any) => ({
+          ...record,
+          // Ensure we display formatted names for readability
+          name: record.name
+        }));
+        
+        setRecords(processedRecords);
       } else {
         throw new Error("Failed to fetch DNS records");
       }
@@ -72,7 +79,7 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
   
   const handleAddRecord = async (newRecord: DNSRecord) => {
     // Validate inputs
-    if (!newRecord.name) {
+    if (!newRecord.name && newRecord.name !== '@') {
       toast.error("Please enter a record name");
       return;
     }
@@ -88,8 +95,21 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
       return;
     }
     
-    setAdding(true);
     try {
+      // Check if there's a duplicate record already
+      const existingRecord = records.find(r => 
+        r.type === newRecord.type && 
+        (r.name === newRecord.name || 
+         (r.name === fullDomain && newRecord.name === '@'))
+      );
+      
+      if (existingRecord && ['A', 'AAAA', 'CNAME'].includes(newRecord.type)) {
+        toast.error(`A ${newRecord.type} record with that name already exists. Delete it first or use a different name.`);
+        return;
+      }
+      
+      setAdding(true);
+      
       const { data, error } = await supabase.functions.invoke("domain-dns", {
         body: {
           action: "add_record",
@@ -102,7 +122,8 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
       if (error) throw error;
       
       if (!data.success) {
-        throw new Error(data.results?.[0]?.errors?.[0]?.message || "Failed to add DNS record");
+        const errorMessage = data.results?.[0]?.errors?.[0]?.message || "Failed to add DNS record";
+        throw new Error(errorMessage);
       }
       
       toast.success("DNS record added successfully");
@@ -195,6 +216,7 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
             fullDomain={fullDomain}
             adding={adding}
             onAddRecord={handleAddRecord}
+            existingRecords={records}
           />
         </TabsContent>
       </Tabs>

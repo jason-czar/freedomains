@@ -50,45 +50,59 @@ const DNSRecordTable: React.FC<DNSRecordTableProps> = ({
             <TableHead>Type</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Content</TableHead>
+            {records.some(record => record.type === 'MX') && (
+              <TableHead>Priority</TableHead>
+            )}
             <TableHead>TTL</TableHead>
             <TableHead>Proxied</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {records.map((record) => (
-            <TableRow key={record.id}>
-              <TableCell className="font-medium">{record.type}</TableCell>
-              <TableCell>{formatRecordName(record.name)}</TableCell>
-              <TableCell className="max-w-xs truncate">{record.content}</TableCell>
-              <TableCell>{getFormattedTTL(record.ttl || 1)}</TableCell>
-              <TableCell>
-                {record.proxied !== undefined ? (
-                  record.proxied ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    "—"
-                  )
-                ) : (
-                  "—"
-                )}
-              </TableCell>
-              <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDeleteRecord(record.id || "")}
-                  disabled={!record.id || deleting === record.id}
-                >
-                  {deleting === record.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  )}
-                </Button>
+          {records.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-6 text-gray-500">
+                No DNS records found for this domain
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            records.map((record) => (
+              <TableRow key={record.id}>
+                <TableCell className="font-medium">{record.type}</TableCell>
+                <TableCell>{formatRecordName(record.name)}</TableCell>
+                <TableCell className="max-w-xs truncate">{record.content}</TableCell>
+                {records.some(record => record.type === 'MX') && (
+                  <TableCell>{record.type === 'MX' ? record.priority : "—"}</TableCell>
+                )}
+                <TableCell>{getFormattedTTL(record.ttl || 1)}</TableCell>
+                <TableCell>
+                  {record.proxied !== undefined ? (
+                    record.proxied ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      "—"
+                    )
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDeleteRecord(record.id || "")}
+                    disabled={!record.id || deleting === record.id}
+                  >
+                    {deleting === record.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    )}
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>
