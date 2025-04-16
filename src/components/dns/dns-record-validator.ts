@@ -1,4 +1,3 @@
-
 import { DNSRecord, DNSValidationResult } from "@/types/domain-types";
 
 export const isValidIPv4 = (ip: string): boolean => {
@@ -21,6 +20,15 @@ export const isValidHostname = (hostname: string): boolean => {
 
 export const isValidEmail = (email: string): boolean => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+export const formatTXTRecord = (content: string): string => {
+  // If the content is already wrapped in double quotes, return as is
+  if (/^".*"$/.test(content)) {
+    return content;
+  }
+  // Otherwise, wrap it in double quotes
+  return `"${content}"`;
 };
 
 export const validateDNSRecord = (
@@ -233,7 +241,7 @@ export const getFieldHelp = (recordType: string, field: string): string => {
       case "MX":
         return "Mail server that handles email for this domain.";
       case "TXT":
-        return "Text record, often used for domain verification.";
+        return "Text record, often used for domain verification. Quotation marks will be added automatically if needed.";
       case "NS":
         return "Nameserver authority for this domain.";
       default:

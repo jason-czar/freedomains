@@ -9,7 +9,7 @@ import RecordContentField from "./record-content-field";
 import RecordPriorityField from "./record-priority-field";
 import RecordProxyField from "./record-proxy-field";
 import ValidationError from "./record-validation-error";
-import { validateDNSRecord, getFieldHelp } from "./dns-record-validator";
+import { validateDNSRecord, getFieldHelp, formatTXTRecord } from "./dns-record-validator";
 import { DNSRecord, ValidationError as ValidationErrorType } from "@/types/domain-types";
 
 interface AddDNSRecordFormProps {
@@ -113,12 +113,17 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
       return;
     }
     
-    // Format name field properly
+    // Format name field properly and handle TXT record formatting
     const formattedRecord = {...newRecord};
     
     // For root domain use @
     if (formattedRecord.name === "" || formattedRecord.name === "@") {
       formattedRecord.name = "@";
+    }
+    
+    // For TXT records, ensure content is wrapped in quotes
+    if (formattedRecord.type === "TXT") {
+      formattedRecord.content = formatTXTRecord(formattedRecord.content);
     }
     
     onAddRecord(formattedRecord);
