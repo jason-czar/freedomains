@@ -29,7 +29,15 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
   });
 
   const handleAddRecord = () => {
-    onAddRecord(newRecord);
+    // Format name field properly
+    const formattedRecord = {...newRecord};
+    
+    // For root domain use @
+    if (formattedRecord.name === "" || formattedRecord.name === "@") {
+      formattedRecord.name = "@";
+    }
+    
+    onAddRecord(formattedRecord);
   };
 
   const getContentPlaceholder = () => {
@@ -42,6 +50,10 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
         return "example.com";
       case "MX":
         return "mail.example.com";
+      case "TXT":
+        return "v=spf1 include:_spf.example.com ~all";
+      case "NS":
+        return "ns1.example.com";
       default:
         return "";
     }
@@ -55,6 +67,8 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
         return "Points To";
       case "TXT":
         return "Text Value";
+      case "NS":
+        return "Nameserver";
       default:
         return "Value";
     }
@@ -83,7 +97,7 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Use @ for root domain
+            Use @ for root domain ({fullDomain})
           </p>
         </div>
         
@@ -96,6 +110,11 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
             value={newRecord.content}
             onChange={(e) => setNewRecord({...newRecord, content: e.target.value})}
           />
+          {newRecord.type === "A" && (
+            <p className="text-xs text-gray-500 mt-1">
+              For Vercel, use: 76.76.21.21
+            </p>
+          )}
         </div>
         
         {newRecord.type === "MX" && (
@@ -144,7 +163,8 @@ const AddDNSRecordForm: React.FC<AddDNSRecordFormProps> = ({
         
         <Button 
           onClick={handleAddRecord}
-          disabled={adding || !newRecord.name || !newRecord.content}
+          disabled={adding || !newRecord.content}
+          className="bg-green-600 hover:bg-green-700 text-white"
         >
           {adding ? (
             <>

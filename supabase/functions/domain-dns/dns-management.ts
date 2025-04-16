@@ -107,12 +107,23 @@ export async function addRecord(
     
     const recordData: DNSRecord = {
       type: record.type,
-      name: record.name.includes('.') ? record.name : `${record.name}.${fullDomain}`,
       content: record.content,
       ttl: record.ttl || 1
     };
     
-    if (record.type === 'MX' && record.priority) {
+    // Fix name formatting based on input
+    if (record.name === '@' || record.name === fullDomain) {
+      // Root domain
+      recordData.name = fullDomain;
+    } else if (record.name.includes('.')) {
+      // Already a fully qualified domain name
+      recordData.name = record.name;
+    } else {
+      // Subdomain
+      recordData.name = `${record.name}.${fullDomain}`;
+    }
+    
+    if (record.type === 'MX' && record.priority !== undefined) {
       recordData.priority = record.priority;
     }
     
@@ -121,6 +132,8 @@ export async function addRecord(
     } else {
       recordData.proxied = false;
     }
+    
+    console.log("Creating DNS record:", recordData);
     
     const createUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
     
@@ -133,12 +146,20 @@ export async function addRecord(
 
       const data = await response.json();
       
+      // Log errors for debugging
+      if (!data.success) {
+        console.error("DNS record creation failed:", data.errors);
+      } else {
+        console.log("DNS record created successfully:", data.result);
+      }
+      
       results.push({
         success: data.success,
         record: data.result,
         errors: data.errors
       });
     } catch (error) {
+      console.error("Error creating DNS record:", error);
       results.push({
         success: false,
         error: error.message || 'Unknown error'
