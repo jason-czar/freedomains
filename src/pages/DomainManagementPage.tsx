@@ -15,6 +15,7 @@ const DomainManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [newDomain, setNewDomain] = useState("");
   const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [creatingDomain, setCreatingDomain] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -54,21 +55,41 @@ const DomainManagementPage = () => {
     setIsAvailable(null);
     
     try {
-      // Check if domain exists in the database
-      const { data, error } = await supabase
+      // First check local database
+      const { data: existingDomain, error: dbError } = await supabase
         .from("domains")
         .select("id")
         .eq("subdomain", newDomain.trim())
         .single();
       
-      if (error && error.code !== "PGRST116") {
-        throw error;
+      if (dbError && dbError.code !== "PGRST116") {
+        throw dbError;
       }
       
-      setIsAvailable(!data);
+      if (existingDomain) {
+        setIsAvailable(false);
+        return;
+      }
+      
+      // Then check with Cloudflare
+      const { data, error } = await supabase.functions.invoke("domain-dns", {
+        body: { 
+          action: "check", 
+          subdomain: newDomain.trim() 
+        }
+      });
+      
+      if (error) throw error;
+      
+      setIsAvailable(data.isAvailable);
+      
+      if (!data.isAvailable) {
+        toast.warning("This domain is already registered with Cloudflare");
+      }
     } catch (error: any) {
       console.error("Error checking domain availability:", error.message);
       toast.error("Failed to check domain availability");
+      setIsAvailable(null);
     } finally {
       setCheckingAvailability(false);
     }
@@ -91,17 +112,47 @@ const DomainManagementPage = () => {
       return;
     }
     
+    setCreatingDomain(true);
     try {
-      const { error } = await supabase
+      // First, create the DNS record at Cloudflare
+      const { data: cfData, error: cfError } = await supabase.functions.invoke("domain-dns", {
+        body: { 
+          action: "create", 
+          subdomain: newDomain.trim() 
+        }
+      });
+      
+      if (cfError) throw cfError;
+      
+      if (!cfData.success) {
+        throw new Error("Failed to create DNS record: " + JSON.stringify(cfData.cloudflareResponse?.errors));
+      }
+      
+      // Then register the domain in our database
+      const { error: dbError } = await supabase
         .from("domains")
         .insert({
           user_id: user.id,
           subdomain: newDomain.trim(),
           is_active: true,
-          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 year expiry
+          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year expiry
+          settings: {
+            dns_record_id: cfData.dnsRecord?.id,
+            cloudflare_record: cfData.dnsRecord
+          }
         });
       
-      if (error) throw error;
+      if (dbError) {
+        // If database insert fails, try to rollback the Cloudflare DNS record
+        await supabase.functions.invoke("domain-dns", {
+          body: { 
+            action: "delete", 
+            subdomain: newDomain.trim() 
+          }
+        });
+        
+        throw dbError;
+      }
       
       toast.success("Domain registered successfully!");
       setNewDomain("");
@@ -109,7 +160,44 @@ const DomainManagementPage = () => {
       fetchDomains();
     } catch (error: any) {
       console.error("Error registering domain:", error.message);
-      toast.error("Failed to register domain");
+      toast.error("Failed to register domain: " + error.message);
+    } finally {
+      setCreatingDomain(false);
+    }
+  };
+
+  const handleDeleteDomain = async (domainId: string, subdomain: string) => {
+    const confirmed = window.confirm("Are you sure you want to delete this domain? This action cannot be undone.");
+    
+    if (!confirmed) return;
+    
+    try {
+      // Delete from Cloudflare first
+      const { error: cfError } = await supabase.functions.invoke("domain-dns", {
+        body: { 
+          action: "delete", 
+          subdomain: subdomain 
+        }
+      });
+      
+      if (cfError) {
+        console.error("Error deleting Cloudflare DNS record:", cfError);
+        // Continue with database deletion even if Cloudflare deletion fails
+      }
+      
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from("domains")
+        .delete()
+        .eq("id", domainId);
+      
+      if (dbError) throw dbError;
+      
+      toast.success("Domain deleted successfully");
+      fetchDomains();
+    } catch (error: any) {
+      console.error("Error deleting domain:", error.message);
+      toast.error("Failed to delete domain");
     }
   };
 
@@ -193,11 +281,20 @@ const DomainManagementPage = () => {
                   </Button>
                   <Button 
                     onClick={registerDomain} 
-                    disabled={!isAvailable || !validateDomainName(newDomain)}
+                    disabled={!isAvailable || !validateDomainName(newDomain) || creatingDomain}
                     className="flex-1"
                   >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Register
+                    {creatingDomain ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Registering...
+                      </>
+                    ) : (
+                      <>
+                        <PlusCircle className="h-4 w-4 mr-2" />
+                        Register
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -246,13 +343,23 @@ const DomainManagementPage = () => {
                               : "Never"}
                           </td>
                           <td className="py-4">
-                            <Button
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => navigate(`/dashboard?domain=${domain.id}`)}
-                            >
-                              Manage
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => navigate(`/dashboard?domain=${domain.id}`)}
+                              >
+                                Manage
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDeleteDomain(domain.id, domain.subdomain)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}

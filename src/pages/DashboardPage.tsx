@@ -5,7 +5,7 @@ import Footer from "@/components/navigation/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, Shield, Settings, CreditCard, PlusCircle, ExternalLink, Edit, Trash2, LineChart, FileText } from "lucide-react";
+import { Globe, Shield, Settings, CreditCard, PlusCircle, ExternalLink, Edit, Trash2, LineChart, FileText, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -51,18 +51,29 @@ const DashboardPage = () => {
     }
   };
 
-  const handleDeleteDomain = async (domainId: string) => {
+  const handleDeleteDomain = async (domainId: string, subdomain: string) => {
     const confirmed = window.confirm("Are you sure you want to delete this domain? This action cannot be undone.");
     
     if (!confirmed) return;
     
     try {
-      const { error } = await supabase
+      const { error: cfError } = await supabase.functions.invoke("domain-dns", {
+        body: { 
+          action: "delete", 
+          subdomain: subdomain 
+        }
+      });
+      
+      if (cfError) {
+        console.error("Error deleting Cloudflare DNS record:", cfError);
+      }
+      
+      const { error: dbError } = await supabase
         .from("domains")
         .delete()
         .eq("id", domainId);
       
-      if (error) throw error;
+      if (dbError) throw dbError;
       
       toast.success("Domain deleted successfully");
       fetchDomains();
@@ -78,7 +89,6 @@ const DashboardPage = () => {
       <main className="flex-grow bg-clay-base/30 py-10">
         <div className="clay-container">
           <div className="flex flex-col md:flex-row gap-8">
-            {/* Sidebar */}
             <aside className="w-full md:w-64 space-y-4">
               <div className="clay-card">
                 <div className="flex items-center space-x-4 mb-6">
@@ -210,7 +220,6 @@ const DashboardPage = () => {
               </div>
             </aside>
             
-            {/* Main Content */}
             <div className="flex-1">
               {activeTab === "domains" && (
                 <div>
@@ -267,7 +276,21 @@ const DashboardPage = () => {
                           <tbody>
                             {domains.map((domain) => (
                               <tr key={domain.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                <td className="py-3 font-medium">{domain.subdomain}.com.channel</td>
+                                <td className="py-3 font-medium">
+                                  <div className="flex items-center">
+                                    {domain.subdomain}.com.channel
+                                    {domain.settings?.dns_record_id ? (
+                                      <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                                        DNS Active
+                                      </span>
+                                    ) : (
+                                      <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full flex items-center">
+                                        <AlertCircle className="h-3 w-3 mr-1" /> 
+                                        DNS Issue
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
                                 <td className="py-3">
                                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                     domain.is_active 
@@ -300,7 +323,7 @@ const DashboardPage = () => {
                                     </button>
                                     <button 
                                       className="text-gray-500 hover:text-red-600"
-                                      onClick={() => handleDeleteDomain(domain.id)}
+                                      onClick={() => handleDeleteDomain(domain.id, domain.subdomain)}
                                     >
                                       <Trash2 className="h-5 w-5" />
                                     </button>

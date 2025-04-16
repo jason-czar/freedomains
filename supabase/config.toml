@@ -1,1 +1,19 @@
+
 project_id = "ufwptcqxikxomjmpfxsf"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+
+[realtime]
+enabled = true
+
+[storage]
+enabled = true
+
+[functions.domain-dns]
+verify_jwt = true
