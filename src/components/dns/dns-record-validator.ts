@@ -23,10 +23,14 @@ export const isValidEmail = (email: string): boolean => {
 };
 
 export const formatTXTRecord = (content: string): string => {
+  // Trim whitespace
+  content = content.trim();
+  
   // If the content is already wrapped in double quotes, return as is
   if (/^".*"$/.test(content)) {
     return content;
   }
+  
   // Otherwise, wrap it in double quotes
   return `"${content}"`;
 };

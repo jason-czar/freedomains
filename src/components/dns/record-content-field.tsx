@@ -35,7 +35,7 @@ const RecordContentField: React.FC<RecordContentFieldProps> = ({
                 </span>
               </TooltipTrigger>
               <TooltipContent className="max-w-sm">
-                <p>The content field of TXT records must be in quotation marks. Quotation marks will be added automatically if needed.</p>
+                <p>TXT record content will be automatically wrapped in quotation marks if needed. Example: "vc-domain-verify=verification-token"</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -59,7 +59,7 @@ const RecordContentField: React.FC<RecordContentFieldProps> = ({
           )}
           {type === "TXT" && (
             <p className="text-xs text-gray-500 mt-1">
-              TXT record content should be entered without quotation marks. They will be added automatically.
+              Quotation marks will be added automatically. Example: "vc-domain-verify=verification-token"
             </p>
           )}
           {helpText && <p className="text-xs text-gray-500 mt-1">{helpText}</p>}
