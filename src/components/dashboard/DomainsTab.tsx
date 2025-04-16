@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Edit, Globe, Trash2, FileText, AlertCircle } from "lucide-react";
+import { PlusCircle, Edit, Globe, Trash2, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -111,19 +111,7 @@ const DomainsTab: React.FC<DomainsTabProps> = ({
                 {domains.map((domain) => (
                   <tr key={domain.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 font-medium">
-                      <div className="flex items-center">
-                        {domain.subdomain}.{domain.settings?.domain_suffix || "com.channel"}
-                        {domain.settings?.dns_record_id ? (
-                          <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                            DNS Active
-                          </span>
-                        ) : (
-                          <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full flex items-center">
-                            <AlertCircle className="h-3 w-3 mr-1" /> 
-                            DNS Issue
-                          </span>
-                        )}
-                      </div>
+                      {domain.subdomain}.{domain.settings?.domain_suffix || "com.channel"}
                     </td>
                     <td className="py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
