@@ -1,4 +1,3 @@
-
 import { DNSRecord } from "./types.ts";
 import { formatResponse, errorResponse, getCloudflareHeaders } from "./helpers.ts";
 
@@ -110,12 +109,13 @@ export async function createDomain(
     }
     
     // Update SSL settings
-    await updateSSLSettings(zoneId, apiKey);
+    const domainSettings = await updateDomainSettings(zoneId, apiKey);
     
     return formatResponse({ 
       success: true,
       fullDomain,
-      dnsRecords: createdRecords
+      dnsRecords: createdRecords,
+      domainSettings
     });
   }
   
@@ -156,14 +156,15 @@ export async function createDomain(
     console.log("Vercel verification CNAME added:", vercelCnameData);
     
     // Update SSL settings
-    await updateSSLSettings(zoneId, apiKey);
+    const domainSettings = await updateDomainSettings(zoneId, apiKey);
   }
   
   return formatResponse({ 
     success: data.success,
     fullDomain,
     dnsRecord: data.result,
-    cloudflareResponse: data
+    cloudflareResponse: data,
+    domainSettings
   }, data.success ? 200 : 400);
 }
 
@@ -369,24 +370,21 @@ export async function updateRecord(
 }
 
 // Helper function to update SSL settings
-async function updateSSLSettings(zoneId: string, apiKey: string) {
-  // Update the SSL setting to make sure it's set to "Flexible"
+async function updateDomainSettings(zoneId: string, apiKey: string) {
+  // SSL settings
   const sslUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/ssl`;
-  
   const sslResponse = await fetch(sslUrl, {
     method: 'PATCH',
     headers: getCloudflareHeaders(apiKey),
     body: JSON.stringify({
-      value: 'flexible' // Flexible SSL allows Cloudflare to handle SSL termination
+      value: 'full' // Upgrade from 'flexible' to 'full' for better security
     }),
   });
-  
   const sslData = await sslResponse.json();
   console.log("SSL settings updated:", sslData);
-  
-  // Also enable Always Use HTTPS
+
+  // Always Use HTTPS
   const httpsUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/always_use_https`;
-  
   const httpsResponse = await fetch(httpsUrl, {
     method: 'PATCH',
     headers: getCloudflareHeaders(apiKey),
@@ -394,7 +392,41 @@ async function updateSSLSettings(zoneId: string, apiKey: string) {
       value: 'on'
     }),
   });
-  
   const httpsData = await httpsResponse.json();
   console.log("HTTPS settings updated:", httpsData);
+
+  // Browser Integrity Check (prevents bad bots and crawlers)
+  const browserIntegrityUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/browser_check`;
+  const browserIntegrityResponse = await fetch(browserIntegrityUrl, {
+    method: 'PATCH',
+    headers: getCloudflareHeaders(apiKey),
+    body: JSON.stringify({
+      value: 'on'
+    }),
+  });
+  const browserIntegrityData = await browserIntegrityResponse.json();
+  console.log("Browser Integrity Check updated:", browserIntegrityData);
+
+  // Auto Minify (improve performance)
+  const minifyUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/auto_minify`;
+  const minifyResponse = await fetch(minifyUrl, {
+    method: 'PATCH',
+    headers: getCloudflareHeaders(apiKey),
+    body: JSON.stringify({
+      value: {
+        html: true,
+        css: true,
+        js: true
+      }
+    }),
+  });
+  const minifyData = await minifyResponse.json();
+  console.log("Auto Minify settings updated:", minifyData);
+
+  return {
+    ssl: sslData,
+    https: httpsData,
+    browserIntegrity: browserIntegrityData,
+    minify: minifyData
+  };
 }
