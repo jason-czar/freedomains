@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import AiDebugHelper from "@/components/debug/AiDebugHelper";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import FeaturesPage from "./pages/FeaturesPage";
@@ -24,6 +25,8 @@ const App = () => (
         <AuthProvider>
           <Toaster />
           <Sonner />
+          {/* Add AI debug helper that runs in the background */}
+          <AiDebugHelper enabled={import.meta.env.DEV} />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/features" element={<FeaturesPage />} />
