@@ -22,6 +22,49 @@ const DomainManagementPage = () => {
     fetchDomains();
   }, [user]);
 
+  const checkDnsStatus = async (domainList: any[]) => {
+    // For each domain, check if it has DNS records
+    for (const domain of domainList) {
+      try {
+        const { data, error } = await supabase.functions.invoke("domain-dns", {
+          body: {
+            action: "list_records",
+            subdomain: domain.subdomain,
+            domain: domain.settings?.domain_suffix || "com.channel"
+          }
+        });
+        
+        if (error) {
+          console.error(`Error checking DNS for ${domain.subdomain}:`, error);
+          continue;
+        }
+        
+        if (data.success && data.records && data.records.length > 0) {
+          // Update domain settings to mark DNS as active
+          const { error: updateError } = await supabase
+            .from("domains")
+            .update({
+              settings: {
+                ...domain.settings,
+                dns_active: true,
+                dns_records: data.records
+              }
+            })
+            .eq("id", domain.id);
+            
+          if (updateError) {
+            console.error(`Error updating DNS status for ${domain.subdomain}:`, updateError);
+          }
+        }
+      } catch (err) {
+        console.error(`Error in DNS check for ${domain.subdomain}:`, err);
+      }
+    }
+    
+    // Refetch domains with updated DNS status
+    fetchDomains();
+  };
+
   const fetchDomains = async () => {
     if (!user) return;
     
@@ -35,6 +78,9 @@ const DomainManagementPage = () => {
       if (error) throw error;
       
       setDomains(data || []);
+      
+      // Check DNS status for all domains
+      checkDnsStatus(data || []);
     } catch (error: any) {
       console.error("Error fetching domains:", error.message);
       toast.error("Failed to load domains");

@@ -83,6 +83,20 @@ const DNSRecordManager: React.FC<DNSManagerProps> = ({
         }));
         
         setRecords(processedRecords);
+        
+        // Update the domain settings to mark DNS as active if records exist
+        if (processedRecords.length > 0) {
+          await supabase
+            .from("domains")
+            .update({
+              settings: {
+                domain_suffix: domainSuffix,
+                dns_active: true,
+                dns_records: processedRecords
+              }
+            })
+            .eq("id", domainId);
+        }
       } else {
         throw new Error("Failed to fetch DNS records");
       }
@@ -150,6 +164,7 @@ const DNSRecordManager: React.FC<DNSManagerProps> = ({
             existingRecords={records}
             onRecordAdded={refreshRecords}
             setActiveTab={setActiveTab}
+            domainId={domainId}
           />
         </TabsContent>
         

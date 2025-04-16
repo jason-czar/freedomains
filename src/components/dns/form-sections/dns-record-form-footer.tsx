@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Loader2, Plus } from "lucide-react";
+import { AlertCircle, Loader2, Plus, Check } from "lucide-react";
 
 interface DNSRecordFormFooterProps {
   adding: boolean;

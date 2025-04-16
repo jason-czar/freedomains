@@ -16,6 +16,8 @@ interface Domain {
     domain_suffix?: string;
     delegated?: boolean;
     nameservers?: string[];
+    dns_records?: any[];
+    dns_active?: boolean;
   };
 }
 
@@ -37,6 +39,20 @@ const DomainList: React.FC<DomainListProps> = ({
   const getDomainDisplay = (domain: Domain) => {
     const suffix = domain.settings?.domain_suffix || "com.channel";
     return `${domain.subdomain}.${suffix}`;
+  };
+
+  const isDnsActive = (domain: Domain) => {
+    // Consider DNS active if explicitly marked as active in the settings
+    if (domain.settings?.dns_active === true) {
+      return true;
+    }
+    
+    // Check if there are DNS records in the settings
+    if (domain.settings?.dns_records && domain.settings.dns_records.length > 0) {
+      return true;
+    }
+    
+    return false;
   };
 
   const handleDeleteDomain = async (domainId: string, subdomain: string, domainSuffix: string = "com.channel") => {
@@ -103,7 +119,20 @@ const DomainList: React.FC<DomainListProps> = ({
             <tbody>
               {domains.map((domain) => (
                 <tr key={domain.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-4 font-medium">{getDomainDisplay(domain)}</td>
+                  <td className="py-4 font-medium">
+                    <div className="flex items-center">
+                      {getDomainDisplay(domain)}
+                      {isDnsActive(domain) ? (
+                        <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                          DNS Active
+                        </span>
+                      ) : (
+                        <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full flex items-center">
+                          DNS Issue
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       domain.settings?.delegated 

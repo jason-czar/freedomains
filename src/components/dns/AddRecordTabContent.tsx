@@ -14,6 +14,7 @@ interface AddRecordTabContentProps {
   existingRecords: DNSRecord[];
   onRecordAdded: () => void;
   setActiveTab: (tab: string) => void;
+  domainId: string;
 }
 
 const AddRecordTabContent: React.FC<AddRecordTabContentProps> = ({
@@ -24,7 +25,8 @@ const AddRecordTabContent: React.FC<AddRecordTabContentProps> = ({
   setAdding,
   existingRecords,
   onRecordAdded,
-  setActiveTab
+  setActiveTab,
+  domainId
 }) => {
   const handleAddRecord = async (newRecord: DNSRecord) => {
     try {
@@ -44,6 +46,22 @@ const AddRecordTabContent: React.FC<AddRecordTabContentProps> = ({
       if (!data.success) {
         const errorMessage = data.results?.[0]?.errors?.[0]?.message || "Failed to add DNS record";
         throw new Error(errorMessage);
+      }
+      
+      // Update domain settings to mark DNS as active
+      const { error: updateError } = await supabase
+        .from("domains")
+        .update({
+          settings: {
+            domain_suffix: domainSuffix,
+            dns_active: true,
+            dns_records: [...existingRecords, newRecord]
+          }
+        })
+        .eq("id", domainId);
+        
+      if (updateError) {
+        console.error("Error updating domain settings:", updateError);
       }
       
       toast.success("DNS record added successfully");
