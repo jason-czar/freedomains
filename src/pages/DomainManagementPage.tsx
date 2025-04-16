@@ -5,11 +5,13 @@ import Navbar from "@/components/navigation/navbar";
 import Footer from "@/components/navigation/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, CheckCircle, XCircle, Loader2, Server } from "lucide-react";
+import { PlusCircle, CheckCircle, XCircle, Loader2, Server, Globe } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import DNSRecordManager from "@/components/ui/dns-record-manager";
 
 const DomainManagementPage = () => {
   const [domains, setDomains] = useState<any[]>([]);
@@ -21,6 +23,8 @@ const DomainManagementPage = () => {
   const [domainSuffix, setDomainSuffix] = useState("com.channel");
   const [registrationType, setRegistrationType] = useState("standard");
   const [nameservers, setNameservers] = useState<string[]>(["ns1.example.com", "ns2.example.com"]);
+  const [dnsModalOpen, setDnsModalOpen] = useState(false);
+  const [selectedDomain, setSelectedDomain] = useState<any>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -267,6 +271,11 @@ const DomainManagementPage = () => {
     setNameservers(newNameservers);
   };
 
+  const openDnsManager = (domain: any) => {
+    setSelectedDomain(domain);
+    setDnsModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -481,6 +490,14 @@ const DomainManagementPage = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                onClick={() => openDnsManager(domain)}
+                              >
+                                <Globe className="h-4 w-4 mr-1" />
+                                DNS
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 className="text-red-600 hover:text-red-800"
                                 onClick={() => handleDeleteDomain(domain.id, domain.subdomain, domain.settings?.domain_suffix)}
                               >
@@ -523,6 +540,25 @@ const DomainManagementPage = () => {
           </div>
         </div>
       </main>
+      
+      {/* DNS Management Modal */}
+      <Dialog open={dnsModalOpen} onOpenChange={setDnsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>DNS Management</DialogTitle>
+          </DialogHeader>
+          
+          {selectedDomain && (
+            <DNSRecordManager 
+              domainId={selectedDomain.id}
+              subdomain={selectedDomain.subdomain}
+              domainSuffix={selectedDomain.settings?.domain_suffix || "com.channel"}
+              onRefresh={fetchDomains}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      
       <Footer />
     </div>
   );

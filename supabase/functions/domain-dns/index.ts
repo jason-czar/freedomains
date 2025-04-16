@@ -15,6 +15,19 @@ const handleCors = (req: Request) => {
   return null;
 };
 
+// DNS Record Types
+type DNSRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'NS' | 'SRV' | 'CAA';
+
+// Interface for DNS record
+interface DNSRecord {
+  type: DNSRecordType;
+  name: string;
+  content: string;
+  ttl?: number;
+  priority?: number;
+  proxied?: boolean;
+}
+
 // Main server function
 serve(async (req) => {
   // Handle CORS
@@ -36,12 +49,12 @@ serve(async (req) => {
   }
 
   try {
-    const { action, subdomain, domain, nameservers } = await req.json();
+    const { action, subdomain, domain, nameservers, records } = await req.json();
     
     // Use domain if provided, otherwise default to com.channel
     const domainSuffix = domain || 'com.channel';
 
-    if (!action || !subdomain) {
+    if (!action) {
       return new Response(
         JSON.stringify({ error: 'Missing required parameters' }),
         { 
@@ -58,7 +71,7 @@ serve(async (req) => {
     };
 
     // Full domain to check/create (either subdomain.com.channel or subdomain.customdomain)
-    const fullDomain = `${subdomain}.${domainSuffix}`;
+    const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
 
     if (action === 'check') {
       // Check if a DNS record already exists for this subdomain
@@ -271,6 +284,176 @@ serve(async (req) => {
         }),
         { 
           status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    else if (action === 'list_records') {
+      // List all DNS records for a domain
+      const listUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records?name=${fullDomain}`;
+      
+      const response = await fetch(listUrl, {
+        method: 'GET',
+        headers: cloudflareHeaders,
+      });
+
+      const data = await response.json();
+      
+      return new Response(
+        JSON.stringify({ 
+          success: data.success,
+          records: data.result,
+          fullDomain
+        }),
+        { 
+          status: data.success ? 200 : 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    else if (action === 'add_record') {
+      // Validate required fields
+      if (!records || !Array.isArray(records) || records.length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'Missing or invalid records data' }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      const results = [];
+      
+      for (const record of records) {
+        // Validate record
+        if (!record.type || !record.name || !record.content) {
+          results.push({
+            success: false,
+            error: 'Missing required fields in record (type, name, content)'
+          });
+          continue;
+        }
+        
+        // Prepare the record data
+        const recordData: DNSRecord = {
+          type: record.type as DNSRecordType,
+          name: record.name.includes('.') ? record.name : `${record.name}.${fullDomain}`,
+          content: record.content,
+          ttl: record.ttl || 1
+        };
+        
+        // Add priority for MX records
+        if (record.type === 'MX' && record.priority) {
+          recordData.priority = record.priority;
+        }
+        
+        // Set proxied flag (most records can be proxied except NS, MX, etc.)
+        if (['A', 'AAAA', 'CNAME'].includes(record.type)) {
+          recordData.proxied = record.proxied !== undefined ? record.proxied : true;
+        } else {
+          recordData.proxied = false; // Other record types cannot be proxied
+        }
+        
+        // Create the record
+        const createUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records`;
+        
+        try {
+          const response = await fetch(createUrl, {
+            method: 'POST',
+            headers: cloudflareHeaders,
+            body: JSON.stringify(recordData),
+          });
+
+          const data = await response.json();
+          
+          results.push({
+            success: data.success,
+            record: data.result,
+            errors: data.errors
+          });
+        } catch (error) {
+          results.push({
+            success: false,
+            error: error.message || 'Unknown error'
+          });
+        }
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          success: results.every(r => r.success),
+          results,
+          fullDomain
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    else if (action === 'delete_record') {
+      // Delete a specific DNS record
+      if (!req.body.record_id) {
+        return new Response(
+          JSON.stringify({ error: 'Missing record ID' }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      const deleteUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records/${req.body.record_id}`;
+      
+      const response = await fetch(deleteUrl, {
+        method: 'DELETE',
+        headers: cloudflareHeaders,
+      });
+
+      const data = await response.json();
+      
+      return new Response(
+        JSON.stringify({ 
+          success: data.success,
+          cloudflareResponse: data
+        }),
+        { 
+          status: data.success ? 200 : 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    else if (action === 'update_record') {
+      // Update a specific DNS record
+      if (!req.body.record_id || !req.body.record) {
+        return new Response(
+          JSON.stringify({ error: 'Missing record ID or record data' }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      const updateUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records/${req.body.record_id}`;
+      
+      const response = await fetch(updateUrl, {
+        method: 'PUT',
+        headers: cloudflareHeaders,
+        body: JSON.stringify(req.body.record),
+      });
+
+      const data = await response.json();
+      
+      return new Response(
+        JSON.stringify({ 
+          success: data.success,
+          record: data.result,
+          cloudflareResponse: data
+        }),
+        { 
+          status: data.success ? 200 : 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
