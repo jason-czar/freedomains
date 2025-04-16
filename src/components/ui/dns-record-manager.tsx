@@ -3,13 +3,14 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Link, ArrowRightLeft, Server } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 import DNSRecordTable, { DNSRecord } from "../dns/dns-record-table";
 import AddDNSRecordForm from "../dns/add-dns-record-form";
 import DNSEmptyState from "../dns/dns-empty-state";
 import DNSLoadingState from "../dns/dns-loading-state";
+import { NameserverManager } from "../domain/NameserverManager";
 
 interface DNSRecordManagerProps {
   domainId: string;
@@ -30,12 +31,41 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
   const [activeTab, setActiveTab] = useState("records");
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [nameservers, setNameservers] = useState<string[]>(["ns1.example.com", "ns2.example.com"]);
+  const [forwardingUrl, setForwardingUrl] = useState("");
+  const [forwardingType, setForwardingType] = useState("301");
+  const [updatingNameservers, setUpdatingNameservers] = useState(false);
+  const [updatingForwarding, setUpdatingForwarding] = useState(false);
   
   const fullDomain = `${subdomain}.${domainSuffix}`;
   
   useEffect(() => {
     fetchRecords();
+    fetchDomainSettings();
   }, [subdomain, domainSuffix]);
+  
+  const fetchDomainSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("domains")
+        .select("settings")
+        .eq("id", domainId)
+        .single();
+      
+      if (error) throw error;
+      
+      if (data?.settings?.nameservers) {
+        setNameservers(data.settings.nameservers);
+      }
+      
+      if (data?.settings?.forwarding) {
+        setForwardingUrl(data.settings.forwarding.url || "");
+        setForwardingType(data.settings.forwarding.type || "301");
+      }
+    } catch (error: any) {
+      console.error("Error fetching domain settings:", error);
+    }
+  };
   
   const fetchRecords = async () => {
     setLoading(true);
@@ -171,6 +201,138 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
     }
   };
   
+  const handleUpdateNameservers = async () => {
+    if (nameservers.filter(ns => ns.trim()).length < 2) {
+      toast.error("You must provide at least 2 nameservers");
+      return;
+    }
+    
+    setUpdatingNameservers(true);
+    try {
+      // First, delete existing NS records
+      const nsRecords = records.filter(r => r.type === "NS");
+      for (const record of nsRecords) {
+        if (record.id) {
+          await supabase.functions.invoke("domain-dns", {
+            body: {
+              action: "delete_record",
+              record_id: record.id
+            }
+          });
+        }
+      }
+      
+      // Add new NS records
+      const validNameservers = nameservers.filter(ns => ns.trim());
+      const { data, error } = await supabase.functions.invoke("domain-dns", {
+        body: {
+          action: "add_record",
+          subdomain,
+          domain: domainSuffix,
+          records: validNameservers.map(ns => ({
+            type: "NS",
+            name: "@",
+            content: ns.trim(),
+            ttl: 3600,
+            proxied: false
+          }))
+        }
+      });
+      
+      if (error) throw error;
+      
+      // Update domain settings in database
+      const { error: updateError } = await supabase
+        .from("domains")
+        .update({
+          settings: {
+            domain_suffix: domainSuffix,
+            nameservers: validNameservers
+          }
+        })
+        .eq("id", domainId);
+      
+      if (updateError) throw updateError;
+      
+      toast.success("Nameservers updated successfully");
+      refreshRecords();
+      setActiveTab("records");
+    } catch (error: any) {
+      console.error("Error updating nameservers:", error);
+      toast.error("Failed to update nameservers");
+    } finally {
+      setUpdatingNameservers(false);
+    }
+  };
+  
+  const handleUpdateForwarding = async () => {
+    if (!forwardingUrl.trim()) {
+      toast.error("Please enter a forwarding URL");
+      return;
+    }
+    
+    setUpdatingForwarding(true);
+    try {
+      // First, check if there's an existing redirect record
+      const redirectRecords = records.filter(r => r.type === "URL");
+      
+      // Delete existing redirect records
+      for (const record of redirectRecords) {
+        if (record.id) {
+          await supabase.functions.invoke("domain-dns", {
+            body: {
+              action: "delete_record",
+              record_id: record.id
+            }
+          });
+        }
+      }
+      
+      // Add new URL redirect record
+      const { data, error } = await supabase.functions.invoke("domain-dns", {
+        body: {
+          action: "add_record",
+          subdomain,
+          domain: domainSuffix,
+          records: [{
+            type: "URL",
+            name: "@",
+            content: forwardingUrl.trim(),
+            ttl: 1,
+            proxied: true
+          }]
+        }
+      });
+      
+      if (error) throw error;
+      
+      // Update domain settings in database
+      const { error: updateError } = await supabase
+        .from("domains")
+        .update({
+          settings: {
+            domain_suffix: domainSuffix,
+            forwarding: {
+              url: forwardingUrl.trim(),
+              type: forwardingType
+            }
+          }
+        })
+        .eq("id", domainId);
+      
+      if (updateError) throw updateError;
+      
+      toast.success("Forwarding settings updated successfully");
+      refreshRecords();
+      setActiveTab("records");
+    } catch (error: any) {
+      console.error("Error updating forwarding settings:", error);
+      toast.error("Failed to update forwarding settings");
+    } finally {
+      setUpdatingForwarding(false);
+    }
+  };
+  
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -191,9 +353,11 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="records">DNS Records</TabsTrigger>
           <TabsTrigger value="add">Add Record</TabsTrigger>
+          <TabsTrigger value="nameservers">Nameservers</TabsTrigger>
+          <TabsTrigger value="forwarding">Forwarding</TabsTrigger>
         </TabsList>
         
         <TabsContent value="records">
@@ -218,6 +382,94 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
             onAddRecord={handleAddRecord}
             existingRecords={records}
           />
+        </TabsContent>
+        
+        <TabsContent value="nameservers">
+          <div className="bg-blue-50 p-4 rounded-lg mb-4">
+            <p className="text-blue-800">
+              <strong>Nameserver Delegation:</strong> Configure custom nameservers to take full control 
+              over all DNS records. You'll need your own DNS hosting service 
+              (like Cloudflare, AWS Route53, etc).
+            </p>
+          </div>
+          
+          <NameserverManager 
+            nameservers={nameservers}
+            setNameservers={setNameservers}
+          />
+          
+          <Button 
+            onClick={handleUpdateNameservers}
+            disabled={updatingNameservers || nameservers.filter(ns => ns.trim()).length < 2}
+            className="mt-4"
+          >
+            {updatingNameservers ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Updating Nameservers
+              </>
+            ) : (
+              <>
+                <Server className="h-4 w-4 mr-2" />
+                Update Nameservers
+              </>
+            )}
+          </Button>
+        </TabsContent>
+        
+        <TabsContent value="forwarding">
+          <div className="bg-blue-50 p-4 rounded-lg mb-4">
+            <p className="text-blue-800">
+              <strong>Domain Forwarding:</strong> Redirect this domain to another URL.
+              This will replace any existing A or CNAME records.
+            </p>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Destination URL
+              </label>
+              <input 
+                type="url"
+                className="w-full p-2 border rounded"
+                placeholder="https://example.com"
+                value={forwardingUrl}
+                onChange={(e) => setForwardingUrl(e.target.value)}
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Redirect Type
+              </label>
+              <select
+                className="w-full p-2 border rounded"
+                value={forwardingType}
+                onChange={(e) => setForwardingType(e.target.value)}
+              >
+                <option value="301">Permanent (301)</option>
+                <option value="302">Temporary (302)</option>
+              </select>
+            </div>
+            
+            <Button 
+              onClick={handleUpdateForwarding}
+              disabled={updatingForwarding || !forwardingUrl.trim()}
+            >
+              {updatingForwarding ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating Forwarding
+                </>
+              ) : (
+                <>
+                  <ArrowRightLeft className="h-4 w-4 mr-2" />
+                  Update Forwarding
+                </>
+              )}
+            </Button>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

@@ -20,7 +20,6 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
   const [creatingDomain, setCreatingDomain] = useState(false);
   const [domainSuffix, setDomainSuffix] = useState("com.channel");
   const [registrationType, setRegistrationType] = useState("standard");
-  const [nameservers, setNameservers] = useState<string[]>(["ns1.example.com", "ns2.example.com"]);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -49,18 +48,12 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
     
     setCreatingDomain(true);
     try {
-      // Prepare nameservers if needed for delegation
-      const nsArray = registrationType === "delegated" 
-        ? nameservers.filter(ns => ns.trim() !== "") 
-        : undefined;
-      
       // Create DNS records directly through Cloudflare
       const { data: cfData, error: cfError } = await supabase.functions.invoke("domain-dns", {
         body: { 
           action: "create", 
           subdomain: newDomain.trim(),
           domain: domainSuffix,
-          nameservers: nsArray,
           records: [
             {
               type: "A",
@@ -82,7 +75,7 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
       
       if (cfError) throw cfError;
       
-      if (!cfData.success && !cfData.delegated) {
+      if (!cfData.success) {
         throw new Error("Failed to create DNS records: " + JSON.stringify(cfData.cloudflareResponse?.errors));
       }
       
@@ -96,9 +89,7 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
           expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
           settings: {
             domain_suffix: domainSuffix,
-            delegation_type: registrationType,
-            nameservers: nsArray,
-            delegated: registrationType === "delegated"
+            delegation_type: "standard"
           }
         });
       
@@ -116,16 +107,9 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
       }
       
       toast.success("Domain registered successfully!");
-      
-      if (registrationType === "delegated") {
-        toast.info(`Your domain ${newDomain}.${domainSuffix} has been delegated to your nameservers.`, {
-          duration: 10000,
-        });
-      } else {
-        toast.info(`Domain ${newDomain}.${domainSuffix} is ready to use. You can now manage DNS records through the DNS Manager.`, {
-          duration: 10000,
-        });
-      }
+      toast.info(`Domain ${newDomain}.${domainSuffix} is ready to use. You can now manage DNS records through the DNS Manager.`, {
+        duration: 10000,
+      });
       
       setNewDomain("");
       setIsAvailable(null);
@@ -140,8 +124,7 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
 
   const isRegisterButtonDisabled = !isAvailable || 
     !validateDomainName(newDomain) || 
-    creatingDomain || 
-    (registrationType === "delegated" && nameservers.filter(ns => ns.trim() !== "").length < 2);
+    creatingDomain;
 
   return (
     <div className="mb-6">
@@ -150,8 +133,6 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
       <RegistrationTabs
         registrationType={registrationType}
         setRegistrationType={setRegistrationType}
-        nameservers={nameservers}
-        setNameservers={setNameservers}
       />
       
       <DomainAvailabilityChecker
