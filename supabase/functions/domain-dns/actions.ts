@@ -17,7 +17,6 @@ export async function checkDomain(
 
   const data = await response.json();
   
-  // If result array is empty, the domain is available
   const isAvailable = !data.result || data.result.length === 0;
   
   return formatResponse({ 
@@ -37,11 +36,9 @@ export async function createDomain(
 ) {
   const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
   
-  // If nameservers are provided, create NS records for delegation
   if (nameservers && Array.isArray(nameservers) && nameservers.length > 0) {
     const nsRecords = [];
     
-    // Create NS records for each nameserver
     for (const ns of nameservers) {
       const createNsUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
       
@@ -52,8 +49,8 @@ export async function createDomain(
           type: 'NS',
           name: fullDomain,
           content: ns,
-          ttl: 3600, // 1 hour TTL for nameservers
-          proxied: false // NS records cannot be proxied
+          ttl: 3600,
+          proxied: false
         }),
       });
 
@@ -72,7 +69,6 @@ export async function createDomain(
     });
   }
   
-  // If records are provided, create them
   if (records && Array.isArray(records) && records.length > 0) {
     const createdRecords = [];
     
@@ -108,7 +104,6 @@ export async function createDomain(
       createdRecords.push(data.result);
     }
     
-    // Update SSL settings
     const domainSettings = await updateDomainSettings(zoneId, apiKey);
     
     return formatResponse({ 
@@ -119,7 +114,6 @@ export async function createDomain(
     });
   }
   
-  // Default behavior: Create a new A record for the subdomain
   const createUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
   
   const response = await fetch(createUrl, {
@@ -128,16 +122,15 @@ export async function createDomain(
     body: JSON.stringify({
       type: 'A',
       name: fullDomain,
-      content: '76.76.21.21', // Vercel's Edge Network IP
-      ttl: 1, // Auto TTL
-      proxied: true // Use Cloudflare proxy
+      content: '76.76.21.21',
+      ttl: 1,
+      proxied: true
     }),
   });
 
   const data = await response.json();
   
   if (data.success) {
-    // Set up CNAME for Vercel verification
     const vercelCnameUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
     
     const vercelCnameResponse = await fetch(vercelCnameUrl, {
@@ -155,7 +148,6 @@ export async function createDomain(
     const vercelCnameData = await vercelCnameResponse.json();
     console.log("Vercel verification CNAME added:", vercelCnameData);
     
-    // Update SSL settings
     const domainSettings = await updateDomainSettings(zoneId, apiKey);
   }
   
@@ -176,7 +168,6 @@ export async function deleteDomain(
 ) {
   const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
   
-  // First, find all records for this domain
   const checkUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${fullDomain}`;
   
   const checkResponse = await fetch(checkUrl, {
@@ -190,7 +181,6 @@ export async function deleteDomain(
     return errorResponse('DNS record not found', 404);
   }
 
-  // Delete all records for this domain
   const deleteResponses = [];
   for (const record of checkData.result) {
     const recordId = record.id;
@@ -205,7 +195,6 @@ export async function deleteDomain(
     deleteResponses.push(deleteData);
   }
   
-  // Also delete the Vercel verification CNAME if it exists
   const vercelCheckUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=_vercel.${fullDomain}`;
   const vercelCheckResponse = await fetch(vercelCheckUrl, {
     method: 'GET',
@@ -265,7 +254,6 @@ export async function addRecord(
   const results = [];
   
   for (const record of records) {
-    // Validate record
     if (!record.type || !record.name || !record.content) {
       results.push({
         success: false,
@@ -274,7 +262,6 @@ export async function addRecord(
       continue;
     }
     
-    // Prepare the record data
     const recordData: DNSRecord = {
       type: record.type,
       name: record.name.includes('.') ? record.name : `${record.name}.${fullDomain}`,
@@ -282,19 +269,16 @@ export async function addRecord(
       ttl: record.ttl || 1
     };
     
-    // Add priority for MX records
     if (record.type === 'MX' && record.priority) {
       recordData.priority = record.priority;
     }
     
-    // Set proxied flag (most records can be proxied except NS, MX, etc.)
     if (['A', 'AAAA', 'CNAME'].includes(record.type)) {
       recordData.proxied = record.proxied !== undefined ? record.proxied : true;
     } else {
-      recordData.proxied = false; // Other record types cannot be proxied
+      recordData.proxied = false;
     }
     
-    // Create the record
     const createUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
     
     try {
@@ -369,21 +353,18 @@ export async function updateRecord(
   }, data.success ? 200 : 400);
 }
 
-// Helper function to update SSL settings
 async function updateDomainSettings(zoneId: string, apiKey: string) {
-  // SSL settings
   const sslUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/ssl`;
   const sslResponse = await fetch(sslUrl, {
     method: 'PATCH',
     headers: getCloudflareHeaders(apiKey),
     body: JSON.stringify({
-      value: 'full' // Upgrade from 'flexible' to 'full' for better security
+      value: 'full'
     }),
   });
   const sslData = await sslResponse.json();
   console.log("SSL settings updated:", sslData);
 
-  // Always Use HTTPS
   const httpsUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/always_use_https`;
   const httpsResponse = await fetch(httpsUrl, {
     method: 'PATCH',
@@ -395,7 +376,6 @@ async function updateDomainSettings(zoneId: string, apiKey: string) {
   const httpsData = await httpsResponse.json();
   console.log("HTTPS settings updated:", httpsData);
 
-  // Browser Integrity Check (prevents bad bots and crawlers)
   const browserIntegrityUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/browser_check`;
   const browserIntegrityResponse = await fetch(browserIntegrityUrl, {
     method: 'PATCH',
@@ -407,7 +387,6 @@ async function updateDomainSettings(zoneId: string, apiKey: string) {
   const browserIntegrityData = await browserIntegrityResponse.json();
   console.log("Browser Integrity Check updated:", browserIntegrityData);
 
-  // Auto Minify (improve performance)
   const minifyUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/auto_minify`;
   const minifyResponse = await fetch(minifyUrl, {
     method: 'PATCH',
@@ -423,10 +402,70 @@ async function updateDomainSettings(zoneId: string, apiKey: string) {
   const minifyData = await minifyResponse.json();
   console.log("Auto Minify settings updated:", minifyData);
 
+  const brotliUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/brotli`;
+  const brotliResponse = await fetch(brotliUrl, {
+    method: 'PATCH',
+    headers: getCloudflareHeaders(apiKey),
+    body: JSON.stringify({
+      value: 'on'
+    }),
+  });
+  const brotliData = await brotliResponse.json();
+  console.log("Brotli compression enabled:", brotliData);
+
+  const http3Url = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/http3`;
+  const http3Response = await fetch(http3Url, {
+    method: 'PATCH',
+    headers: getCloudflareHeaders(apiKey),
+    body: JSON.stringify({
+      value: 'on'
+    }),
+  });
+  const http3Data = await http3Response.json();
+  console.log("HTTP/3 enabled:", http3Data);
+
+  const tlsUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/min_tls_version`;
+  const tlsResponse = await fetch(tlsUrl, {
+    method: 'PATCH',
+    headers: getCloudflareHeaders(apiKey),
+    body: JSON.stringify({
+      value: '1.2'
+    }),
+  });
+  const tlsData = await tlsResponse.json();
+  console.log("Minimum TLS version set:", tlsData);
+
+  const cacheTtlUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/browser_cache_ttl`;
+  const cacheTtlResponse = await fetch(cacheTtlUrl, {
+    method: 'PATCH',
+    headers: getCloudflareHeaders(apiKey),
+    body: JSON.stringify({
+      value: 14400
+    }),
+  });
+  const cacheTtlData = await cacheTtlResponse.json();
+  console.log("Browser cache TTL updated:", cacheTtlData);
+
+  const emailObfuscationUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/settings/email_obfuscation`;
+  const emailObfuscationResponse = await fetch(emailObfuscationUrl, {
+    method: 'PATCH',
+    headers: getCloudflareHeaders(apiKey),
+    body: JSON.stringify({
+      value: 'on'
+    }),
+  });
+  const emailObfuscationData = await emailObfuscationResponse.json();
+  console.log("Email obfuscation enabled:", emailObfuscationData);
+
   return {
     ssl: sslData,
     https: httpsData,
     browserIntegrity: browserIntegrityData,
-    minify: minifyData
+    minify: minifyData,
+    brotli: brotliData,
+    http3: http3Data,
+    tls: tlsData,
+    cacheTtl: cacheTtlData,
+    emailObfuscation: emailObfuscationData
   };
 }
