@@ -1,6 +1,7 @@
 
 import { DNSRecord } from "./types.ts";
 import { formatResponse, errorResponse, getCloudflareHeaders } from "./helpers.ts";
+import { updateDomainSettings } from "./domain-settings.ts";
 
 export async function checkDomain(
   subdomain: string,
@@ -157,6 +158,6 @@ export async function createDomain(
     fullDomain,
     dnsRecord: data.result,
     cloudflareResponse: data,
-    domainSettings
+    domainSettings: await updateDomainSettings(zoneId, apiKey)
   }, data.success ? 200 : 400);
 }
