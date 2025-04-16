@@ -1,28 +1,55 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/navigation/navbar";
 import Footer from "@/components/navigation/footer";
 import { Check } from "lucide-react";
+import { toast } from "sonner";
 
 const SignupPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { signUp, user } = useAuth();
   
-  const handleSubmit = (e: React.FormEvent) => {
+  // If user is already logged in, redirect to dashboard
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!agreeTerms) {
+      toast.error("You must agree to the Terms of Service and Privacy Policy");
+      return;
+    }
+    
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters long");
+      return;
+    }
+    
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const { error } = await signUp(email, password, { name });
+      
+      if (error) {
+        console.error("Signup error:", error);
+        toast.error(error.message || "Failed to create account. Please try again.");
+      }
+    } catch (error) {
+      console.error("Unexpected error during signup:", error);
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
       setLoading(false);
-      // Here we would normally redirect after signup
-      console.log("Signup attempt with:", { name, email, password });
-    }, 1500);
+    }
   };
   
   return (
@@ -80,7 +107,9 @@ const SignupPage = () => {
                   className="clay-input"
                   placeholder="••••••••"
                 />
-                <p className="text-xs text-gray-500">Must be at least 8 characters</p>
+                <p className={`text-xs ${password.length < 8 && password.length > 0 ? "text-red-500" : "text-gray-500"}`}>
+                  Must be at least 8 characters
+                </p>
               </div>
               
               <div className="flex items-start">
@@ -89,6 +118,8 @@ const SignupPage = () => {
                     id="terms"
                     name="terms"
                     type="checkbox"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
                     required
                     className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
@@ -144,6 +175,7 @@ const SignupPage = () => {
                   <button
                     type="button"
                     className="clay-button bg-white text-gray-700 py-2 px-4 flex items-center justify-center"
+                    onClick={() => toast.info("Google authentication coming soon!")}
                   >
                     <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12.545 10.239v3.818h5.556c-.23 1.438-.916 2.658-1.952 3.478l3.142 2.439c1.838-1.697 2.903-4.194 2.903-7.151 0-.609-.054-1.196-.155-1.765h-9.494z" />
@@ -156,6 +188,7 @@ const SignupPage = () => {
                   <button
                     type="button"
                     className="clay-button bg-white text-gray-700 py-2 px-4 flex items-center justify-center"
+                    onClick={() => toast.info("Facebook authentication coming soon!")}
                   >
                     <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M24 12.073c0-5.992-4.81-10.802-10.802-10.802S2.396 6.081 2.396 12.073c0 5.402 3.874 9.889 9.002 10.622v-7.521H8.08v-3.101h3.318V9.412c0-3.28 1.952-5.087 4.935-5.087 1.429 0 2.926.255 2.926.255v3.219h-1.649c-1.622 0-2.131 1.01-2.131 2.044v2.458h3.63l-.58 3.101h-3.05v7.521c5.127-.733 9.002-5.22 9.002-10.622z" />
