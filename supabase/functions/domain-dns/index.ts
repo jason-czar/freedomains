@@ -97,6 +97,38 @@ serve(async (req) => {
 
       const data = await response.json();
       
+      if (data.success) {
+        // Now, let's update the SSL setting to make sure it's set to "Flexible"
+        // This will ensure Cloudflare doesn't try to validate the SSL certificate on the origin
+        const sslUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/settings/ssl`;
+        
+        const sslResponse = await fetch(sslUrl, {
+          method: 'PATCH',
+          headers: cloudflareHeaders,
+          body: JSON.stringify({
+            value: 'flexible' // Flexible SSL allows Cloudflare to handle SSL termination
+          }),
+        });
+        
+        const sslData = await sslResponse.json();
+        
+        // Also enable Always Use HTTPS
+        const httpsUrl = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/settings/always_use_https`;
+        
+        const httpsResponse = await fetch(httpsUrl, {
+          method: 'PATCH',
+          headers: cloudflareHeaders,
+          body: JSON.stringify({
+            value: 'on'
+          }),
+        });
+        
+        const httpsData = await httpsResponse.json();
+        
+        console.log("SSL settings updated:", sslData);
+        console.log("HTTPS settings updated:", httpsData);
+      }
+      
       return new Response(
         JSON.stringify({ 
           success: data.success,
