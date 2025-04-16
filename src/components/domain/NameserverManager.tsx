@@ -9,7 +9,7 @@ interface NameserverManagerProps {
   setNameservers: (nameservers: string[]) => void;
 }
 
-const NameserverManager: React.FC<NameserverManagerProps> = ({
+export const NameserverManager: React.FC<NameserverManagerProps> = ({
   nameservers,
   setNameservers
 }) => {

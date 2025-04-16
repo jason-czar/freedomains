@@ -1,14 +1,12 @@
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DomainAvailabilityChecker from "./DomainAvailabilityChecker";
-import NameserverManager from "./NameserverManager";
+import RegistrationTabs from "./RegistrationTabs";
+import RegisterDomainButton from "./RegisterDomainButton";
 
 interface DomainRegistrationFormProps {
   fetchDomains: () => Promise<void>;
@@ -140,40 +138,21 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
     }
   };
 
+  const isRegisterButtonDisabled = !isAvailable || 
+    !validateDomainName(newDomain) || 
+    creatingDomain || 
+    (registrationType === "delegated" && nameservers.filter(ns => ns.trim() !== "").length < 2);
+
   return (
     <div className="mb-6">
       <h3 className="text-lg font-semibold mb-4">Register New Domain</h3>
       
-      <Tabs value={registrationType} onValueChange={setRegistrationType} className="mb-6">
-        <TabsList className="grid grid-cols-2 w-full max-w-md mb-4">
-          <TabsTrigger value="standard">Standard Domain</TabsTrigger>
-          <TabsTrigger value="delegated">Nameserver Delegation</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="standard">
-          <div className="bg-blue-50 p-4 rounded-lg mb-4">
-            <p className="text-blue-800">
-              <strong>Standard Domain:</strong> We'll create an A record pointing to Vercel. 
-              You'll need to add this domain to your Vercel project settings.
-            </p>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="delegated">
-          <div className="bg-blue-50 p-4 rounded-lg mb-4">
-            <p className="text-blue-800">
-              <strong>Nameserver Delegation:</strong> We'll delegate this subdomain to your nameservers, 
-              giving you full control over all DNS records. You'll need your own DNS hosting service 
-              (like Cloudflare, AWS Route53, etc).
-            </p>
-          </div>
-          
-          <NameserverManager 
-            nameservers={nameservers}
-            setNameservers={setNameservers}
-          />
-        </TabsContent>
-      </Tabs>
+      <RegistrationTabs
+        registrationType={registrationType}
+        setRegistrationType={setRegistrationType}
+        nameservers={nameservers}
+        setNameservers={setNameservers}
+      />
       
       <DomainAvailabilityChecker
         newDomain={newDomain}
@@ -185,24 +164,11 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
       />
       
       <div className="mt-4">
-        <Button 
-          onClick={registerDomain} 
-          disabled={!isAvailable || !validateDomainName(newDomain) || creatingDomain || 
-            (registrationType === "delegated" && nameservers.filter(ns => ns.trim() !== "").length < 2)}
-          className="w-full md:w-auto"
-        >
-          {creatingDomain ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Registering...
-            </>
-          ) : (
-            <>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Register
-            </>
-          )}
-        </Button>
+        <RegisterDomainButton 
+          onClick={registerDomain}
+          disabled={isRegisterButtonDisabled}
+          isLoading={creatingDomain}
+        />
       </div>
     </div>
   );
