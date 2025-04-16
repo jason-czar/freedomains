@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AddDNSRecordForm from "./add-dns-record-form";
 import { DNSRecord } from "@/types/domain-types";
+import { Json } from "@/integrations/supabase/types";
 
 interface AddRecordTabContentProps {
   subdomain: string;
@@ -48,6 +49,17 @@ const AddRecordTabContent: React.FC<AddRecordTabContentProps> = ({
         throw new Error(errorMessage);
       }
       
+      // Convert DNSRecord array to JSON-compatible format
+      const dnsRecordsJson = [...existingRecords, newRecord].map(record => ({
+        type: record.type,
+        name: record.name,
+        content: record.content,
+        ttl: record.ttl,
+        priority: record.priority,
+        proxied: record.proxied,
+        id: record.id
+      })) as Json[];
+      
       // Update domain settings to mark DNS as active
       const { error: updateError } = await supabase
         .from("domains")
@@ -55,7 +67,7 @@ const AddRecordTabContent: React.FC<AddRecordTabContentProps> = ({
           settings: {
             domain_suffix: domainSuffix,
             dns_active: true,
-            dns_records: [...existingRecords, newRecord]
+            dns_records: dnsRecordsJson
           }
         })
         .eq("id", domainId);

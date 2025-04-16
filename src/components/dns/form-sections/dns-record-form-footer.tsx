@@ -24,7 +24,7 @@ const DNSRecordFormFooter: React.FC<DNSRecordFormFooterProps> = ({
       <Button 
         onClick={onAddRecord}
         disabled={adding || disabled}
-        className="bg-green-600 hover:bg-green-700 text-white"
+        className={adding ? "bg-gray-400" : "bg-green-600 hover:bg-green-700 text-white"}
       >
         {adding ? (
           <>
