@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-import DNSRecordTable from "../dns/dns-record-table";
+import DNSRecordTable, { DNSRecord } from "../dns/dns-record-table";
 import AddDNSRecordForm from "../dns/add-dns-record-form";
 import DNSEmptyState from "../dns/dns-empty-state";
 import DNSLoadingState from "../dns/dns-loading-state";
@@ -152,16 +152,13 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
   
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">
-          DNS Management for {fullDomain}
-        </h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">DNS Management for {fullDomain}</h3>
         <Button 
           variant="outline" 
           size="sm"
           onClick={refreshRecords}
           disabled={refreshing}
-          className="flex items-center"
         >
           {refreshing ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -173,7 +170,7 @@ const DNSRecordManager: React.FC<DNSRecordManagerProps> = ({
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 w-full max-w-md mb-4">
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
           <TabsTrigger value="records">DNS Records</TabsTrigger>
           <TabsTrigger value="add">Add Record</TabsTrigger>
         </TabsList>
