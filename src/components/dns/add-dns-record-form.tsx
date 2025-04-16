@@ -9,7 +9,8 @@ import RecordContentField from "./record-content-field";
 import RecordPriorityField from "./record-priority-field";
 import RecordProxyField from "./record-proxy-field";
 import ValidationError from "./record-validation-error";
-import { validateDNSRecord, getFieldHelp, formatTXTRecord } from "./dns-record-validator";
+import { validateDNSRecord, getFieldHelp } from "./validators/dns-record-validator";
+import { formatTXTRecord } from "./validators/content-formatters";
 import { DNSRecord, ValidationError as ValidationErrorType } from "@/types/domain-types";
 
 interface AddDNSRecordFormProps {

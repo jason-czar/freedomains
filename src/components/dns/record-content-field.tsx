@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Input } from "@/components/ui/input";
-import { getContentLabel, getContentPlaceholder } from "./dns-record-validator";
+import { getContentLabel, getContentPlaceholder } from "./validators/ui-helpers";
 import { AlertCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
