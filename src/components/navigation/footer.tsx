@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 const Footer = () => {
-  return <footer className="bg-[#08070e]">
+  return <footer className="bg-[#08070e] my-0 py-[42px]">
       <div className="clay-container">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
