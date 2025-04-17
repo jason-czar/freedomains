@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import DomainSearch from "@/components/ui/domain-search";
 const HeroSection = () => {
-  return <section className="pt-20 pb-32 relative overflow-hidden bg-gradient-to-b from-transparent to-[#1E1E1E]">
+  return <section className="pt-20 pb-32 relative overflow-hidden bg-gradient-to-b from-transparent to-[#08070e]">
       {/* Clay-like decorative blobs */}
       <div className="absolute top-20 right-[10%] h-64 w-64 rounded-full bg-clay-lavender/40 blur-3xl animate-float"></div>
       <div className="absolute bottom-20 left-[5%] h-40 w-40 rounded-full bg-clay-mint/30 blur-3xl animate-float" style={{
