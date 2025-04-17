@@ -56,17 +56,17 @@ const SettingsPage = () => {
 
   return <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow py-10 bg-clay-base/30">
+      <main className="flex-grow py-10 bg-black">
         <div className="clay-container">
-          <div className="clay-card">
-            <h2 className="text-2xl font-bold mb-6">Account Settings</h2>
-            <p className="text-gray-600 mb-6">
+          <div className="bg-black/90 rounded-lg p-8 shadow-xl border border-gray-800">
+            <h2 className="text-2xl font-bold mb-6 text-white">Account Settings</h2>
+            <p className="text-gray-400 mb-6">
               Manage your account preferences and personal information.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-8">
               <div>
-                <h3 className="text-lg font-semibold mb-4">Profile</h3>
+                <h3 className="text-lg font-semibold mb-4 text-white">Profile</h3>
                 <div className="flex items-center mb-6">
                   <div className="mr-4">
                     {profile?.avatar_url ? 
@@ -90,16 +90,25 @@ const SettingsPage = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-400 mb-1">
                       Full Name
                     </label>
-                    <Input className="clay-input" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Your name" />
+                    <Input 
+                      className="clay-input bg-black/50 border-gray-800 text-white" 
+                      value={fullName} 
+                      onChange={e => setFullName(e.target.value)} 
+                      placeholder="Your name"
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-400 mb-1">
                       Email Address
                     </label>
-                    <Input className="clay-input bg-gray-50" value={user?.email || ""} disabled />
+                    <Input 
+                      className="clay-input bg-black/50 border-gray-800 text-gray-400" 
+                      value={user?.email || ""} 
+                      disabled 
+                    />
                     <p className="text-xs text-gray-500 mt-1">
                       Email address cannot be changed
                     </p>
@@ -108,38 +117,80 @@ const SettingsPage = () => {
               </div>
               
               <div>
-                <h3 className="text-lg font-semibold mb-4">Notification Preferences</h3>
-                <div className="space-y-3">
-                  {[{
-                  id: "email-marketing",
-                  label: "Marketing emails"
-                }, {
-                  id: "email-system",
-                  label: "System notifications"
-                }, {
-                  id: "email-billing",
-                  label: "Billing updates"
-                }, {
-                  id: "email-security",
-                  label: "Security alerts"
-                }].map(pref => <div key={pref.id} className="flex items-center">
-                      <input id={pref.id} type="checkbox" defaultChecked={pref.id !== "email-marketing"} className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                      <label htmlFor={pref.id} className="ml-2 block text-sm text-gray-700">
-                        {pref.label}
+                <h3 className="text-lg font-semibold mb-4 text-white">Password</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">
+                      Current Password
+                    </label>
+                    <Input 
+                      className="clay-input bg-black/50 border-gray-800 text-white" 
+                      type="password" 
+                      placeholder="••••••••" 
+                    />
+                  </div>
+                  <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-1">
+                        New Password
                       </label>
-                    </div>)}
+                      <Input 
+                        className="clay-input bg-black/50 border-gray-800 text-white" 
+                        type="password" 
+                        placeholder="••••••••" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-1">
+                        Confirm New Password
+                      </label>
+                      <Input 
+                        className="clay-input bg-black/50 border-gray-800 text-white" 
+                        type="password" 
+                        placeholder="••••••••" 
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              <div className="pt-6 border-t border-gray-200 flex justify-end space-x-4">
-                <Button type="button" variant="ghost" className="clay-button bg-white text-gray-700">
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-white">Notification Preferences</h3>
+                <div className="space-y-3">
+                  {[
+                    { id: "email-marketing", label: "Marketing emails" },
+                    { id: "email-system", label: "System notifications" },
+                    { id: "email-billing", label: "Billing updates" },
+                    { id: "email-security", label: "Security alerts" },
+                  ].map(pref => (
+                    <div key={pref.id} className="flex items-center">
+                      <input
+                        id={pref.id}
+                        type="checkbox"
+                        defaultChecked={pref.id !== "email-marketing"}
+                        className="h-4 w-4 text-green-500 focus:ring-green-500 border-gray-700 rounded bg-black/50"
+                      />
+                      <label htmlFor={pref.id} className="ml-2 block text-sm text-gray-400">
+                        {pref.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="pt-6 border-t border-gray-800 flex justify-end space-x-4">
+                <Button type="button" variant="ghost" className="clay-button bg-gray-900 text-gray-400 hover:bg-gray-800">
                   Cancel
                 </Button>
-                <Button type="submit" className="clay-button-primary" disabled={saving}>
-                  {saving ? <>
+                <Button type="submit" className="clay-button-primary bg-green-500 hover:bg-green-600 text-white" disabled={saving}>
+                  {saving ? (
+                    <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Saving...
-                    </> : "Save Changes"}
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </Button>
               </div>
             </form>
