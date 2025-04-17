@@ -37,25 +37,25 @@ const DomainSearch = ({ onSearch }: DomainSearchProps) => {
   };
 
   return (
-    <div className="clay-panel max-w-xl mx-auto">
-      <h2 className="text-2xl font-bold text-center mb-6">Find Your Perfect Subdomain</h2>
+    <div className="bg-black/40 backdrop-blur-sm border border-gray-800/50 rounded-xl p-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] max-w-xl mx-auto">
+      <h2 className="text-2xl font-bold text-center mb-6 text-white">Find Your Perfect Subdomain</h2>
       
       <form onSubmit={handleSearch} className="flex flex-col space-y-4">
-        <div className="flex items-center">
+        <div className="flex items-center bg-gray-900/60 rounded-full p-1 border border-gray-800">
           <Input
             type="text"
             placeholder="yourname"
             value={subdomain}
             onChange={(e) => setSubdomain(e.target.value)}
-            className="clay-input flex-grow"
+            className="bg-transparent border-0 focus:ring-0 text-white flex-grow rounded-full shadow-none"
             autoComplete="off"
           />
-          <span className="px-3 text-lg font-medium text-gray-600">.com.channel</span>
+          <span className="px-3 text-lg font-medium text-gray-400">.com.channel</span>
         </div>
         
         <Button 
           type="submit" 
-          className="clay-button-primary w-full"
+          className="w-full py-6 bg-gradient-to-r from-emerald-500 to-green-400 text-gray-900 font-semibold hover:brightness-110 shadow-[0_4px_15px_rgba(0,0,0,0.3)] hover:shadow-[0_4px_20px_rgba(0,255,165,0.4)]"
           disabled={isSearching || !subdomain.trim()}
         >
           {isSearching ? "Checking..." : "Check Availability"}
@@ -63,16 +63,16 @@ const DomainSearch = ({ onSearch }: DomainSearchProps) => {
       </form>
 
       {isAvailable !== null && !isSearching && (
-        <div className={`mt-6 p-4 rounded-clay text-center ${isAvailable ? 'bg-clay-mint text-green-700' : 'bg-clay-pink text-rose-700'}`}>
+        <div className={`mt-6 p-4 rounded-xl text-center ${isAvailable ? 'bg-emerald-900/30 border border-emerald-500/20' : 'bg-rose-900/30 border border-rose-500/20'}`}>
           {isAvailable ? (
             <>
-              <div className="text-xl font-bold mb-2">{subdomain}.com.channel is available!</div>
-              <Button className="clay-button bg-white text-green-600 mt-2">
+              <div className="text-xl font-bold mb-2 text-emerald-400">{subdomain}.com.channel is available!</div>
+              <Button className="mt-2 bg-black/40 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50">
                 Register Now
               </Button>
             </>
           ) : (
-            <div className="text-xl font-bold">Sorry, {subdomain}.com.channel is already taken.</div>
+            <div className="text-xl font-bold text-rose-400">Sorry, {subdomain}.com.channel is already taken.</div>
           )}
         </div>
       )}

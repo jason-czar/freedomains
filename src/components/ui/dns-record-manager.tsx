@@ -118,12 +118,13 @@ const DNSRecordManager: React.FC<DNSManagerProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">DNS Management for {fullDomain}</h3>
+        <h3 className="text-lg font-semibold text-white">DNS Management for {fullDomain}</h3>
         <Button 
           variant="outline" 
           size="sm"
           onClick={refreshRecords}
           disabled={refreshing}
+          className="border-green-500/30 bg-black/40 text-green-400 hover:border-green-500/50 hover:bg-gray-900"
         >
           {refreshing ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -135,11 +136,11 @@ const DNSRecordManager: React.FC<DNSManagerProps> = ({
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="records">DNS Records</TabsTrigger>
-          <TabsTrigger value="add">Add Record</TabsTrigger>
-          <TabsTrigger value="nameservers">Nameservers</TabsTrigger>
-          <TabsTrigger value="forwarding">Forwarding</TabsTrigger>
+        <TabsList className="grid grid-cols-4 w-full bg-gray-900/60 p-1">
+          <TabsTrigger value="records" className="data-[state=active]:bg-gray-800 data-[state=active]:text-green-400">DNS Records</TabsTrigger>
+          <TabsTrigger value="add" className="data-[state=active]:bg-gray-800 data-[state=active]:text-green-400">Add Record</TabsTrigger>
+          <TabsTrigger value="nameservers" className="data-[state=active]:bg-gray-800 data-[state=active]:text-green-400">Nameservers</TabsTrigger>
+          <TabsTrigger value="forwarding" className="data-[state=active]:bg-gray-800 data-[state=active]:text-green-400">Forwarding</TabsTrigger>
         </TabsList>
         
         <TabsContent value="records">

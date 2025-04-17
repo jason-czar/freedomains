@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -57,15 +58,15 @@ const DomainTable: React.FC<DomainTableProps> = ({
     <div className="min-h-[200px]">
       {loading ? (
         <div className="flex justify-center items-center h-[200px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-400"></div>
         </div>
       ) : domains.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 rounded-lg min-h-[200px] flex items-center justify-center">
+        <div className="text-center py-8 bg-black/20 rounded-xl min-h-[200px] flex items-center justify-center border border-gray-800/50">
           <div>
-            <p className="text-gray-500">You don't have any domains registered yet.</p>
+            <p className="text-gray-400">You don't have any domains registered yet.</p>
             <Button 
               variant="link" 
-              className="text-indigo-600"
+              className="text-green-400 hover:text-green-300"
               onClick={() => window.location.href = "/domains"}
             >
               Register your first domain
@@ -73,13 +74,13 @@ const DomainTable: React.FC<DomainTableProps> = ({
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto bg-black/20 rounded-xl border border-gray-800/50">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="py-3 text-left font-semibold text-gray-600">Domain</th>
-                <th className="py-3 text-left font-semibold text-gray-600">Status</th>
-                <th className="py-3 text-left font-semibold text-gray-600">Actions</th>
+              <tr className="border-b border-gray-800">
+                <th className="py-3 text-left font-semibold text-gray-400 px-4">Domain</th>
+                <th className="py-3 text-left font-semibold text-gray-400 px-4">Status</th>
+                <th className="py-3 text-left font-semibold text-gray-400 px-4">Actions</th>
               </tr>
             </thead>
             <tbody>

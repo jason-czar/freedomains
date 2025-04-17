@@ -19,15 +19,15 @@ const DomainTableRow: React.FC<DomainTableRowProps> = ({
   handleDeleteDomain
 }) => {
   return (
-    <tr className="border-b border-gray-100 hover:bg-gray-50">
-      <td className="py-3 font-medium">
+    <tr className="border-b border-gray-800/50 hover:bg-gray-900/30 transition-colors">
+      <td className="py-3 font-medium text-gray-300">
         {domain.subdomain}.{domain.settings?.domain_suffix || "com.channel"}
       </td>
       <td className="py-3">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
           domain.is_active 
-            ? "bg-green-100 text-green-800" 
-            : "bg-yellow-100 text-yellow-800"
+            ? "bg-emerald-900/30 text-emerald-400 border border-emerald-500/20" 
+            : "bg-yellow-900/30 text-yellow-400 border border-yellow-500/20"
         }`}>
           {domain.is_active ? "Active" : "Inactive"}
         </span>
@@ -41,6 +41,7 @@ const DomainTableRow: React.FC<DomainTableRowProps> = ({
               setSelectedDomain(domain.id);
               setActiveTab("editor");
             }}
+            className="border-blue-500/20 text-blue-400 hover:border-blue-500/40 hover:bg-blue-900/20"
           >
             <Edit className="h-4 w-4 mr-1" />
             Manage
@@ -49,12 +50,13 @@ const DomainTableRow: React.FC<DomainTableRowProps> = ({
             variant="outline"
             size="sm"
             onClick={() => openDnsManager(domain)}
+            className="border-indigo-500/20 text-indigo-400 hover:border-indigo-500/40 hover:bg-indigo-900/20"
           >
             <Globe className="h-4 w-4 mr-1" />
             DNS
           </Button>
           <button 
-            className="text-gray-500 hover:text-red-600"
+            className="text-gray-400 hover:text-rose-400 transition-colors"
             onClick={() => handleDeleteDomain(domain.id, domain.subdomain)}
           >
             <Trash2 className="h-5 w-5" />

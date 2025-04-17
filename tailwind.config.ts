@@ -63,12 +63,12 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				clay: {
-					mint: '#D8F3DC',
-					lavender: '#E5DEFF',
-					blue: '#D3E5FF',
-					peach: '#FFE5D9',
-					base: '#F1E8E2',
-					pink: '#FFDEE2'
+					mint: '#1adb9a',
+					lavender: '#6a5aff',
+					blue: '#3a95ff',
+					peach: '#ff8a65',
+					base: '#1a1d23',
+					pink: '#ff5e95'
 				}
 			},
 			borderRadius: {
@@ -76,12 +76,13 @@ export default {
 				'clay-lg': '1.5rem',
 			},
 			boxShadow: {
-				'clay-sm': '6px 6px 12px rgba(0, 0, 0, 0.05), -6px -6px 12px rgba(255, 255, 255, 0.8), inset 1px 1px 2px rgba(255, 255, 255, 0.5)',
-				'clay-md': '8px 8px 16px rgba(0, 0, 0, 0.05), -8px -8px 16px rgba(255, 255, 255, 0.8), inset 2px 2px 4px rgba(255, 255, 255, 0.5)',
-				'clay-lg': '12px 12px 24px rgba(0, 0, 0, 0.05), -12px -12px 24px rgba(255, 255, 255, 0.8), inset 2px 2px 4px rgba(255, 255, 255, 0.5)',
-				'clay-inner': 'inset 2px 2px 5px rgba(0, 0, 0, 0.05), inset -2px -2px 5px rgba(255, 255, 255, 0.7)',
-				'clay-button': '6px 6px 12px rgba(0, 0, 0, 0.06), -6px -6px 12px rgba(255, 255, 255, 0.8)',
-				'clay-button-pressed': 'inset 4px 4px 8px rgba(0, 0, 0, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.8)',
+				'clay-sm': '0 4px 12px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 255, 165, 0.1)',
+				'clay-md': '0 8px 16px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 255, 165, 0.1)',
+				'clay-lg': '0 12px 24px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 255, 165, 0.15)',
+				'clay-inner': 'inset 0 2px 5px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 255, 165, 0.05)',
+				'clay-button': '0 6px 12px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 255, 165, 0.1)',
+				'clay-button-pressed': 'inset 0 4px 8px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.2)',
+				'neon-glow': '0 0 15px rgba(0, 255, 165, 0.5), 0 0 30px rgba(0, 255, 165, 0.2)',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -103,12 +104,21 @@ export default {
 				'float': {
 					'0%, 100%': { transform: 'translateY(0)' },
 					'50%': { transform: 'translateY(-8px)' }
+				},
+				'pulse-glow': {
+					'0%, 100%': { 
+						boxShadow: '0 0 10px rgba(0, 255, 165, 0.4), 0 0 20px rgba(0, 255, 165, 0.2)'
+					},
+					'50%': { 
+						boxShadow: '0 0 15px rgba(0, 255, 165, 0.6), 0 0 30px rgba(0, 255, 165, 0.3)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'float': 'float 5s ease-in-out infinite'
+				'float': 'float 5s ease-in-out infinite',
+				'pulse-glow': 'pulse-glow 3s ease-in-out infinite'
 			}
 		}
 	},
