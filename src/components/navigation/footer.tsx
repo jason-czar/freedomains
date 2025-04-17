@@ -1,10 +1,7 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
-
 const Footer = () => {
-  return (
-    <footer className="bg-white/80 backdrop-blur-sm pt-16 pb-12 border-t border-gray-100">
+  return <footer className="bg-[#08070e]">
       <div className="clay-container">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -81,8 +78,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
