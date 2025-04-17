@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { DomainSettings } from "@/types/domain-types";
 
 const NotFound = () => {
   const location = useLocation();
@@ -51,10 +52,13 @@ const NotFound = () => {
             if (data) {
               console.log("Found domain data:", data);
               
+              // Safely access settings as DomainSettings object
+              const settings = data.settings as DomainSettings;
+              
               // Check if domain has forwarding settings
-              if (data.settings?.forwarding?.url) {
-                console.log("Forwarding to:", data.settings.forwarding.url);
-                window.location.href = data.settings.forwarding.url;
+              if (settings?.forwarding?.url) {
+                console.log("Forwarding to:", settings.forwarding.url);
+                window.location.href = settings.forwarding.url;
                 return;
               }
               

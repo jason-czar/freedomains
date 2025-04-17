@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/navigation/navbar";
 import Footer from "@/components/navigation/footer";
+import { DomainSettings } from "@/types/domain-types";
 
 const SubdomainLandingPage = () => {
   const { subdomain } = useParams();
@@ -37,9 +38,12 @@ const SubdomainLandingPage = () => {
           setDomainInfo(data);
           
           // Handle domain forwarding if configured
-          if (data.settings?.forwarding?.url) {
-            console.log(`Forwarding to ${data.settings.forwarding.url}`);
-            window.location.href = data.settings.forwarding.url;
+          // Cast settings to DomainSettings type
+          const settings = data.settings as DomainSettings;
+          
+          if (settings?.forwarding?.url) {
+            console.log(`Forwarding to ${settings.forwarding.url}`);
+            window.location.href = settings.forwarding.url;
             return;
           }
         }
