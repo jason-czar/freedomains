@@ -8,7 +8,7 @@ const Footer = () => {
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center space-x-2">
               
-              <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-br from-[#11BA81] to-[#4ADE80]">Domain Channel</span>
+              <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-br from-[#11BA81] to-[#4ADE80]">GetMy.com.channel</span>
             </Link>
             <p className="mt-4 text-gray-600 text-sm">
               The easiest way to find, register and manage your subdomains under com.channel.
