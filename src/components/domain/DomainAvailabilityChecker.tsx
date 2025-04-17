@@ -77,9 +77,7 @@ const DomainAvailabilityChecker: React.FC<DomainAvailabilityCheckerProps> = ({
   };
   return <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
       <div className="col-span-2">
-        <label className="block text-sm font-medium text-gray-400 mb-2">
-          Domain Name
-        </label>
+        
         <div className="flex items-center bg-[#1A1F2C]/80 rounded-full overflow-hidden border border-[#49D97E] shadow-[0_0_10px_rgba(15,160,206,0.1)]">
           <Input className="flex-1 bg-transparent border-0 text-white placeholder-gray-500 focus:ring-0 text-lg rounded-none" placeholder="yourname" value={newDomain} onChange={handleNewDomainChange} />
           <span className="inline-flex items-center px-4 text-gray-400 text-lg">
