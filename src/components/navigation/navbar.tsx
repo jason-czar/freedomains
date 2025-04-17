@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { X, Menu, User, LogOut, LayoutDashboard, LineChart, CreditCard, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,12 +30,17 @@ const navLinks: NavLink[] = [{
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut, profile } = useAuth();
+  const navigate = useNavigate();
 
   const filteredLinks = navLinks.filter(link => {
     if (link.authRequired && !user) return false;
     if (link.guestOnly && user) return false;
     return true;
   });
+
+  const handleBillingNavigation = () => {
+    navigate("/dashboard?tab=billing");
+  };
 
   return <nav className="backdrop-blur-sm sticky top-0 z-50 bg-black/[0.64]">
       <div className="clay-container">
@@ -83,11 +88,9 @@ const Navbar = () => {
                       <span>Analytics</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard?tab=billing">
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      <span>Billing</span>
-                    </Link>
+                  <DropdownMenuItem onClick={handleBillingNavigation}>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    <span>Billing</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/settings">
