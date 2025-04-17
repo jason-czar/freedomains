@@ -1,6 +1,9 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Globe, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 interface DomainTableRowProps {
   domain: any;
   setSelectedDomain: (id: string) => void;
@@ -8,6 +11,7 @@ interface DomainTableRowProps {
   openDnsManager: (domain: any) => void;
   handleDeleteDomain: (domainId: string, subdomain: string) => void;
 }
+
 const DomainTableRow: React.FC<DomainTableRowProps> = ({
   domain,
   setSelectedDomain,
@@ -15,7 +19,14 @@ const DomainTableRow: React.FC<DomainTableRowProps> = ({
   openDnsManager,
   handleDeleteDomain
 }) => {
-  return <tr className="border-b border-gray-800/50 hover:bg-gray-900/30 transition-colors">
+  const navigate = useNavigate();
+
+  const handleEditDomain = () => {
+    navigate(`/landing-page-builder/${domain.id}`);
+  };
+
+  return (
+    <tr className="border-b border-gray-800/50 hover:bg-gray-900/30 transition-colors">
       <td className="py-3 font-medium text-gray-300 px-[17px]">
         {domain.subdomain}.{domain.settings?.domain_suffix || "com.channel"}
       </td>
@@ -26,10 +37,12 @@ const DomainTableRow: React.FC<DomainTableRowProps> = ({
       </td>
       <td className="py-3">
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={() => {
-          setSelectedDomain(domain.id);
-          setActiveTab("editor");
-        }} className="border-blue-500/20 text-blue-400 hover:border-blue-500/40 hover:bg-blue-900/20">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleEditDomain} 
+            className="border-blue-500/20 text-blue-400 hover:border-blue-500/40 hover:bg-blue-900/20"
+          >
             <Edit className="h-4 w-4 mr-1" />
             Manage
           </Button>
@@ -42,6 +55,9 @@ const DomainTableRow: React.FC<DomainTableRowProps> = ({
           </button>
         </div>
       </td>
-    </tr>;
+    </tr>
+  );
 };
+
 export default DomainTableRow;
+
