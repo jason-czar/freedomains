@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2, User as UserIcon } from "lucide-react";
 import AvatarUpload from "@/components/profile/AvatarUpload";
+
 const SettingsPage = () => {
   const {
     user,
@@ -16,11 +17,13 @@ const SettingsPage = () => {
   } = useAuth();
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [saving, setSaving] = useState(false);
+
   React.useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || "");
     }
   }, [profile]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -39,6 +42,7 @@ const SettingsPage = () => {
       setSaving(false);
     }
   };
+
   if (profileLoading) {
     return <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -49,6 +53,7 @@ const SettingsPage = () => {
         <Footer />
       </div>;
   }
+
   return <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow py-10 bg-clay-base/30">
@@ -64,7 +69,9 @@ const SettingsPage = () => {
                 <h3 className="text-lg font-semibold mb-4">Profile</h3>
                 <div className="flex items-center mb-6">
                   <div className="mr-4">
-                    {profile?.avatar_url ? <img src={profile.avatar_url} alt={fullName} className="w-20 h-20 rounded-full object-cover border-2 border-indigo-100" /> : <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center">
+                    {profile?.avatar_url ? 
+                      <img src={profile.avatar_url} alt={fullName} className="w-20 h-20 rounded-full object-cover border-2 border-indigo-100" /> : 
+                      <div className="w-20 h-20 rounded-full bg-indigo-100/50 flex items-center justify-center">
                         <UserIcon className="h-10 w-10 text-green-500" />
                       </div>}
                   </div>
@@ -142,4 +149,5 @@ const SettingsPage = () => {
       <Footer />
     </div>;
 };
+
 export default SettingsPage;
