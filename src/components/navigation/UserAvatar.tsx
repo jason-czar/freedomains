@@ -1,9 +1,11 @@
-
 import { User } from "lucide-react";
-import { Profile } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserAvatarProps {
-  profile?: Profile;
+  profile?: {
+    full_name: string;
+    avatar_url?: string;
+  };
   size?: "sm" | "default";
 }
 
