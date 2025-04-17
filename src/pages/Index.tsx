@@ -15,7 +15,7 @@ const Index = () => {
         <PricingPlans className="py-16" />
         
         {/* Testimonials Section */}
-        <section className="py-20 bg-clay-blue/10">
+        <section className="py-20 bg-[#08070e]">
           <div className="clay-container">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold mb-4">What Our Customers Say</h2>
