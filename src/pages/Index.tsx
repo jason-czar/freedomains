@@ -1,18 +1,15 @@
-
 import React from "react";
 import Navbar from "@/components/navigation/navbar";
 import Footer from "@/components/navigation/footer";
 import HeroSection from "@/components/ui/hero-section";
 import FeaturesSection from "@/components/ui/features-section";
 import PricingPlans from "@/components/ui/pricing-plans";
-
 const Index = () => {
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
         <HeroSection />
-        <div className="py-12 bg-clay-lavender/10">
+        <div className="py-12 bg-clay-mint/0 backdrop-blur-3xl animate-float">
           <FeaturesSection />
         </div>
         <PricingPlans className="py-16" />
@@ -28,30 +25,25 @@ const Index = () => {
             </div>
             
             <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  name: "Sarah Johnson",
-                  role: "Web Developer",
-                  quote: "Domain Channel made it incredibly easy to set up and manage subdomains for all my client projects. The landing page builder is a game-changer!",
-                  avatar: "SJ",
-                  color: "bg-clay-lavender"
-                },
-                {
-                  name: "Michael Chen",
-                  role: "Startup Founder",
-                  quote: "We use Domain Channel for all our product subdomains. The SSL certificates and redirect functionality work flawlessly. Highly recommended!",
-                  avatar: "MC",
-                  color: "bg-clay-mint"
-                },
-                {
-                  name: "Emily Rodriguez",
-                  role: "Marketing Director",
-                  quote: "The analytics features have been invaluable for our marketing campaigns. Setting up new domains takes seconds, not hours.",
-                  avatar: "ER",
-                  color: "bg-clay-peach"
-                }
-              ].map((testimonial, index) => (
-                <div key={index} className="clay-card">
+              {[{
+              name: "Sarah Johnson",
+              role: "Web Developer",
+              quote: "Domain Channel made it incredibly easy to set up and manage subdomains for all my client projects. The landing page builder is a game-changer!",
+              avatar: "SJ",
+              color: "bg-clay-lavender"
+            }, {
+              name: "Michael Chen",
+              role: "Startup Founder",
+              quote: "We use Domain Channel for all our product subdomains. The SSL certificates and redirect functionality work flawlessly. Highly recommended!",
+              avatar: "MC",
+              color: "bg-clay-mint"
+            }, {
+              name: "Emily Rodriguez",
+              role: "Marketing Director",
+              quote: "The analytics features have been invaluable for our marketing campaigns. Setting up new domains takes seconds, not hours.",
+              avatar: "ER",
+              color: "bg-clay-peach"
+            }].map((testimonial, index) => <div key={index} className="clay-card">
                   <div className="flex items-start mb-4">
                     <div className={`${testimonial.color} h-12 w-12 rounded-full flex items-center justify-center mr-4 shadow-clay-sm`}>
                       <span className="font-semibold text-indigo-800">{testimonial.avatar}</span>
@@ -62,8 +54,7 @@ const Index = () => {
                     </div>
                   </div>
                   <p className="text-gray-700 italic">"{testimonial.quote}"</p>
-                </div>
-              ))}
+                </div>)}
             </div>
           </div>
         </section>
@@ -96,8 +87,6 @@ const Index = () => {
         </section>
       </main>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
