@@ -20,7 +20,8 @@ const RegisterDomainButton: React.FC<RegisterDomainButtonProps> = ({
   const handleClick = async () => {
     try {
       await onClick();
-      navigate('/dashboard');
+      // Navigate to dashboard with domains tab active
+      navigate('/dashboard?tab=domains');
     } catch (error) {
       // If onClick throws an error, it will be handled by the parent component
       console.error("Error during domain registration:", error);
@@ -49,4 +50,3 @@ const RegisterDomainButton: React.FC<RegisterDomainButtonProps> = ({
 };
 
 export default RegisterDomainButton;
-
