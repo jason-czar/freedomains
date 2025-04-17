@@ -17,7 +17,7 @@ const Footer = () => {
           
           {/* Products */}
           <div>
-            <h3 className="text-gray-800 font-semibold mb-4">Products</h3>
+            <h3 className="font-semibold mb-4 text-slate-50">Products</h3>
             <ul className="space-y-2">
               <li><Link to="/features" className="text-gray-600 hover:text-indigo-600 text-sm">Features</Link></li>
               <li><Link to="/pricing" className="text-gray-600 hover:text-indigo-600 text-sm">Pricing</Link></li>
