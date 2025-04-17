@@ -20,6 +20,7 @@ import ContactPage from "./pages/ContactPage";
 import BillingPage from "./pages/BillingPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import LandingPageBuilderPage from "./pages/LandingPageBuilderPage";
+import RegisterDomainPage from "./pages/RegisterDomainPage";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,11 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/register-domain" element={
+              <ProtectedRoute>
+                <RegisterDomainPage />
+              </ProtectedRoute>
+            } />
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <DashboardPage />
