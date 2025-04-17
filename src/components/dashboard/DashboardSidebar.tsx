@@ -1,7 +1,6 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Globe, Shield, Settings, CreditCard, Edit, LineChart } from "lucide-react";
+import { Globe, Settings, CreditCard, LineChart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardSidebarProps {
@@ -68,27 +67,6 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             onClick={() => setActiveTab("domains")}
             icon={<Globe />}
             label="Domains"
-          />
-          <SidebarButton
-            active={activeTab === "editor"}
-            onClick={() => {
-              if (selectedDomain || domains.length > 0) {
-                setActiveTab("editor");
-                if (!selectedDomain && domains.length > 0) {
-                  setActiveTab("editor");
-                }
-              } else {
-                navigate("/domains");
-              }
-            }}
-            icon={<Edit />}
-            label="Page Editor"
-          />
-          <SidebarButton
-            active={activeTab === "ssl"}
-            onClick={() => setActiveTab("ssl")}
-            icon={<Shield />}
-            label="SSL Certificates"
           />
           <SidebarButton
             active={activeTab === "analytics"}

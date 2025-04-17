@@ -12,10 +12,10 @@ import DNSRecordManager from "@/components/ui/dns-record-manager";
 // Import dashboard components
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DomainsTab from "@/components/dashboard/DomainsTab";
-import SSLCertificatesTab from "@/components/dashboard/SSLCertificatesTab";
 import AnalyticsTab from "@/components/dashboard/AnalyticsTab";
 import BillingTab from "@/components/dashboard/BillingTab";
 import SettingsTab from "@/components/dashboard/SettingsTab";
+
 const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState("domains");
   const [domains, setDomains] = useState<any[]>([]);
@@ -65,14 +65,25 @@ const DashboardPage = () => {
       <main className="flex-grow bg-clay-base/30 py-10">
         <div className="clay-container">
           <div className="flex flex-col md:flex-row gap-8">
-            <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} selectedDomain={selectedDomain} domains={domains} navigate={navigate} />
+            <DashboardSidebar 
+              activeTab={activeTab} 
+              setActiveTab={setActiveTab} 
+              selectedDomain={selectedDomain} 
+              domains={domains} 
+              navigate={navigate} 
+            />
             
             <div className="flex-1">
-              {activeTab === "domains" && <DomainsTab domains={domains} loading={loading} fetchDomains={fetchDomains} setSelectedDomain={setSelectedDomain} setActiveTab={setActiveTab} openDnsManager={openDnsManager} />}
+              {activeTab === "domains" && <DomainsTab 
+                domains={domains} 
+                loading={loading} 
+                fetchDomains={fetchDomains} 
+                setSelectedDomain={setSelectedDomain} 
+                setActiveTab={setActiveTab} 
+                openDnsManager={openDnsManager}
+              />}
               
               {activeTab === "editor" && selectedDomain && <LandingPageBuilder />}
-              
-              {activeTab === "ssl" && <SSLCertificatesTab />}
               
               {activeTab === "analytics" && <AnalyticsTab />}
               
@@ -97,4 +108,5 @@ const DashboardPage = () => {
       <Footer />
     </div>;
 };
+
 export default DashboardPage;
