@@ -1,12 +1,10 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-
 interface PlanFeature {
   name: string;
   included: boolean;
 }
-
 interface PricingPlan {
   name: string;
   price: {
@@ -18,7 +16,6 @@ interface PricingPlan {
   color: string;
   popular?: boolean;
 }
-
 const plans: PricingPlan[] = [{
   name: "Starter",
   price: {
@@ -120,11 +117,9 @@ const plans: PricingPlan[] = [{
     included: true
   }]
 }];
-
 interface PricingPlansProps {
   className?: string;
 }
-
 const PricingPlans = ({
   className
 }: PricingPlansProps) => {
@@ -136,25 +131,11 @@ const PricingPlans = ({
           Select the perfect plan for your subdomain needs. All plans include SSL and our powerful management dashboard.
         </p>
         
-        <div className="flex items-center justify-center mt-8 rounded-clay-lg p-1.5 shadow-clay-sm inline-flex bg-[#b2b2b2]/[0.19]">
-          <button 
-            onClick={() => setBillingCycle("monthly")} 
-            className={`px-6 py-2 rounded-clay transition-all ${
-              billingCycle === "monthly" 
-                ? "clay-button-primary" 
-                : "text-gray-500 hover:bg-gray-800/50"
-            }`}
-          >
+        <div className="flex items-center justify-center mt-8 rounded-clay-lg p-1.5 shadow-clay-sm inline-flex bg-[#b2b2b2]/[0.19] my-[40px]">
+          <button onClick={() => setBillingCycle("monthly")} className={`px-6 py-2 rounded-clay transition-all ${billingCycle === "monthly" ? "clay-button-primary" : "text-gray-500 hover:bg-gray-800/50"}`}>
             Monthly
           </button>
-          <button 
-            onClick={() => setBillingCycle("yearly")} 
-            className={`px-6 py-2 rounded-clay transition-all ${
-              billingCycle === "yearly" 
-                ? "clay-button-primary" 
-                : "text-gray-500 hover:bg-gray-800/50"
-            }`}
-          >
+          <button onClick={() => setBillingCycle("yearly")} className={`px-6 py-2 rounded-clay transition-all ${billingCycle === "yearly" ? "clay-button-primary" : "text-gray-500 hover:bg-gray-800/50"}`}>
             Yearly <span className="text-xs font-bold text-green-600 ml-1">Save 20%</span>
           </button>
         </div>
@@ -192,5 +173,4 @@ const PricingPlans = ({
       </div>
     </div>;
 };
-
 export default PricingPlans;
