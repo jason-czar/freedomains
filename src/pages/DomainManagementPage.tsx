@@ -16,6 +16,7 @@ const DomainManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [dnsModalOpen, setDnsModalOpen] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<any>(null);
+  const [checkingDns, setCheckingDns] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -23,46 +24,75 @@ const DomainManagementPage = () => {
   }, [user]);
 
   const checkDnsStatus = async (domainList: any[]) => {
-    // For each domain, check if it has DNS records
-    for (const domain of domainList) {
-      try {
-        const { data, error } = await supabase.functions.invoke("domain-dns", {
-          body: {
-            action: "list_records",
-            subdomain: domain.subdomain,
-            domain: domain.settings?.domain_suffix || "com.channel"
-          }
-        });
-        
-        if (error) {
-          console.error(`Error checking DNS for ${domain.subdomain}:`, error);
-          continue;
-        }
-        
-        if (data.success && data.records && data.records.length > 0) {
-          // Update domain settings to mark DNS as active
-          const { error: updateError } = await supabase
-            .from("domains")
-            .update({
-              settings: {
-                ...domain.settings,
-                dns_active: true,
-                dns_records: data.records
-              }
-            })
-            .eq("id", domain.id);
-            
-          if (updateError) {
-            console.error(`Error updating DNS status for ${domain.subdomain}:`, updateError);
-          }
-        }
-      } catch (err) {
-        console.error(`Error in DNS check for ${domain.subdomain}:`, err);
-      }
+    // Don't trigger multiple checks in parallel
+    if (checkingDns) return;
+    
+    setCheckingDns(true);
+    
+    // First update UI with existing data, then check DNS status in background
+    const domainsToCheck = [...domainList].filter(domain => 
+      !domain.settings?.dns_active && !domain.settings?.dns_check_skipped
+    );
+    
+    if (domainsToCheck.length === 0) {
+      setCheckingDns(false);
+      return;
     }
     
-    // Refetch domains with updated DNS status
-    fetchDomains();
+    try {
+      for (const domain of domainsToCheck) {
+        try {
+          const { data, error } = await supabase.functions.invoke("domain-dns", {
+            body: {
+              action: "list_records",
+              subdomain: domain.subdomain,
+              domain: domain.settings?.domain_suffix || "com.channel"
+            }
+          });
+          
+          if (error) {
+            console.error(`Error checking DNS for ${domain.subdomain}:`, error);
+            
+            // Mark as checked to avoid repeated failures
+            await supabase
+              .from("domains")
+              .update({
+                settings: {
+                  ...domain.settings,
+                  dns_check_skipped: true
+                }
+              })
+              .eq("id", domain.id);
+              
+            continue;
+          }
+          
+          if (data.success && data.records && data.records.length > 0) {
+            // Update domain settings to mark DNS as active
+            const { error: updateError } = await supabase
+              .from("domains")
+              .update({
+                settings: {
+                  ...domain.settings,
+                  dns_active: true,
+                  dns_records: data.records
+                }
+              })
+              .eq("id", domain.id);
+              
+            if (updateError) {
+              console.error(`Error updating DNS status for ${domain.subdomain}:`, updateError);
+            }
+          }
+        } catch (err) {
+          console.error(`Error in DNS check for ${domain.subdomain}:`, err);
+        }
+      }
+    } finally {
+      setCheckingDns(false);
+      // Refetch domains with updated DNS status
+      fetchDomains();
+    }
   };
 
   const fetchDomains = async () => {
@@ -78,13 +108,16 @@ const DomainManagementPage = () => {
       if (error) throw error;
       
       setDomains(data || []);
+      setLoading(false);
       
-      // Check DNS status for all domains
-      checkDnsStatus(data || []);
+      // Check DNS status for all domains after UI is updated
+      if (data && data.length > 0) {
+        // Use setTimeout to allow the UI to update first
+        setTimeout(() => checkDnsStatus(data || []), 100);
+      }
     } catch (error: any) {
       console.error("Error fetching domains:", error.message);
       toast.error("Failed to load domains");
-    } finally {
       setLoading(false);
     }
   };

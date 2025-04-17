@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -54,52 +53,50 @@ const DomainTable: React.FC<DomainTableProps> = ({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
-    );
-  }
-
-  if (domains.length === 0) {
-    return (
-      <div className="text-center py-8 bg-gray-50 rounded-lg">
-        <p className="text-gray-500">You don't have any domains registered yet.</p>
-        <Button 
-          variant="link" 
-          className="text-indigo-600"
-          onClick={() => window.location.href = "/domains"}
-        >
-          Register your first domain
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-gray-200">
-            <th className="py-3 text-left font-semibold text-gray-600">Domain</th>
-            <th className="py-3 text-left font-semibold text-gray-600">Status</th>
-            <th className="py-3 text-left font-semibold text-gray-600">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {domains.map((domain) => (
-            <DomainTableRow
-              key={domain.id}
-              domain={domain}
-              setSelectedDomain={setSelectedDomain}
-              setActiveTab={setActiveTab}
-              openDnsManager={openDnsManager}
-              handleDeleteDomain={handleDeleteDomain}
-            />
-          ))}
-        </tbody>
-      </table>
+    <div className="min-h-[200px]">
+      {loading ? (
+        <div className="flex justify-center items-center h-[200px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      ) : domains.length === 0 ? (
+        <div className="text-center py-8 bg-gray-50 rounded-lg min-h-[200px] flex items-center justify-center">
+          <div>
+            <p className="text-gray-500">You don't have any domains registered yet.</p>
+            <Button 
+              variant="link" 
+              className="text-indigo-600"
+              onClick={() => window.location.href = "/domains"}
+            >
+              Register your first domain
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="py-3 text-left font-semibold text-gray-600">Domain</th>
+                <th className="py-3 text-left font-semibold text-gray-600">Status</th>
+                <th className="py-3 text-left font-semibold text-gray-600">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {domains.map((domain) => (
+                <DomainTableRow
+                  key={domain.id}
+                  domain={domain}
+                  setSelectedDomain={setSelectedDomain}
+                  setActiveTab={setActiveTab}
+                  openDnsManager={openDnsManager}
+                  handleDeleteDomain={handleDeleteDomain}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

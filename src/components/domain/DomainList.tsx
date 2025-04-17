@@ -60,32 +60,36 @@ const DomainList: React.FC<DomainListProps> = ({
   return (
     <div>
       <h3 className="text-lg font-semibold mb-4">Your Domains</h3>
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-        </div>
-      ) : domains.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">You don't have any domains registered yet.</p>
-          <p className="text-gray-500 mt-1">Register your first domain above!</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <DomainTableHeader />
-            <tbody>
-              {domains.map((domain) => (
-                <DomainRow
-                  key={domain.id}
-                  domain={domain}
-                  openDnsManager={openDnsManager}
-                  handleDeleteDomain={handleDeleteDomain}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <div className="min-h-[200px]">
+        {loading ? (
+          <div className="flex justify-center items-center h-[200px]">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          </div>
+        ) : domains.length === 0 ? (
+          <div className="text-center py-8 bg-gray-50 rounded-lg min-h-[200px] flex items-center justify-center">
+            <div>
+              <p className="text-gray-500">You don't have any domains registered yet.</p>
+              <p className="text-gray-500 mt-1">Register your first domain above!</p>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <DomainTableHeader />
+              <tbody>
+                {domains.map((domain) => (
+                  <DomainRow
+                    key={domain.id}
+                    domain={domain}
+                    openDnsManager={openDnsManager}
+                    handleDeleteDomain={handleDeleteDomain}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
