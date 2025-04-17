@@ -37,7 +37,7 @@ const DomainSearch = ({
       
       <form onSubmit={handleSearch} className="flex flex-col space-y-4">
         <div className="flex items-center bg-gray-900/60 rounded-full p-1 border-[0.5px] border-white/30 mx-0">
-          <Input type="text" placeholder="yourname" value={subdomain} onChange={e => setSubdomain(e.target.value)} autoComplete="off" className="bg-transparent border-0 focus:ring-0 text-white text-lg flex-grow rounded-full shadow-none px-[18px]" />
+          <Input type="text" placeholder="yourname" value={subdomain} onChange={e => setSubdomain(e.target.value)} autoComplete="off" className="bg-transparent border-0 focus:ring-0 text-white text-lg flex-grow rounded-full shadow-none px-[20px]" />
           <span className="px-3 text-lg font-medium text-gray-400">.com.channel</span>
         </div>
         
