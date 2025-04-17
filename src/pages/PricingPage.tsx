@@ -1,17 +1,14 @@
-
 import React from "react";
 import Navbar from "@/components/navigation/navbar";
 import Footer from "@/components/navigation/footer";
 import PricingPlans from "@/components/ui/pricing-plans";
 import { CheckCircle, XCircle } from "lucide-react";
-
 const PricingPage = () => {
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="py-20 bg-clay-lavender/10">
+        <section className="py-20 bg-[#08070e]">
           <div className="clay-container">
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6">
@@ -38,37 +35,28 @@ const PricingPage = () => {
             </div>
             
             <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
-              {[
-                {
-                  question: "Can I upgrade or downgrade my plan later?",
-                  answer: "Yes, you can upgrade or downgrade your plan at any time. When you upgrade, you'll be charged the prorated difference between plans. When downgrading, the new rate will apply at the start of your next billing cycle."
-                },
-                {
-                  question: "What payment methods do you accept?",
-                  answer: "We accept all major credit cards (Visa, Mastercard, American Express) and PayPal. All payments are processed securely through Stripe."
-                },
-                {
-                  question: "Is there a free trial available?",
-                  answer: "Yes, we offer a 14-day free trial on all plans. No credit card is required to start your trial."
-                },
-                {
-                  question: "How does subdomain registration work?",
-                  answer: "Once you've created an account, you can immediately search for and register available subdomains under com.channel. All registered subdomains are automatically set up with SSL certificates."
-                },
-                {
-                  question: "Can I transfer my existing subdomain?",
-                  answer: "Currently, we only support registering new subdomains directly through our platform. If you have an existing subdomain you'd like to use, please contact our support team."
-                },
-                {
-                  question: "Do you offer refunds?",
-                  answer: "We offer a 30-day money-back guarantee on all plans. If you're not satisfied with our service within the first 30 days, you can request a full refund by contacting our support team."
-                },
-              ].map((faq, index) => (
-                <div key={index} className="clay-card">
+              {[{
+              question: "Can I upgrade or downgrade my plan later?",
+              answer: "Yes, you can upgrade or downgrade your plan at any time. When you upgrade, you'll be charged the prorated difference between plans. When downgrading, the new rate will apply at the start of your next billing cycle."
+            }, {
+              question: "What payment methods do you accept?",
+              answer: "We accept all major credit cards (Visa, Mastercard, American Express) and PayPal. All payments are processed securely through Stripe."
+            }, {
+              question: "Is there a free trial available?",
+              answer: "Yes, we offer a 14-day free trial on all plans. No credit card is required to start your trial."
+            }, {
+              question: "How does subdomain registration work?",
+              answer: "Once you've created an account, you can immediately search for and register available subdomains under com.channel. All registered subdomains are automatically set up with SSL certificates."
+            }, {
+              question: "Can I transfer my existing subdomain?",
+              answer: "Currently, we only support registering new subdomains directly through our platform. If you have an existing subdomain you'd like to use, please contact our support team."
+            }, {
+              question: "Do you offer refunds?",
+              answer: "We offer a 30-day money-back guarantee on all plans. If you're not satisfied with our service within the first 30 days, you can request a full refund by contacting our support team."
+            }].map((faq, index) => <div key={index} className="clay-card">
                   <h3 className="text-xl font-semibold mb-3">{faq.question}</h3>
                   <p className="text-gray-600">{faq.answer}</p>
-                </div>
-              ))}
+                </div>)}
             </div>
           </div>
         </section>
@@ -104,57 +92,78 @@ const PricingPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    { feature: "Number of Subdomains", starter: "1", pro: "5", enterprise: "Unlimited" },
-                    { feature: "Storage", starter: "5GB", pro: "25GB", enterprise: "100GB" },
-                    { feature: "SSL Certificates", starter: "Basic", pro: "Advanced", enterprise: "Premium" },
-                    { feature: "Redirects", starter: "Simple", pro: "Advanced", enterprise: "Advanced" },
-                    { feature: "Custom Landing Pages", starter: false, pro: true, enterprise: true },
-                    { feature: "Analytics", starter: "Basic", pro: "Detailed", enterprise: "Enterprise" },
-                    { feature: "Wildcard DNS", starter: false, pro: false, enterprise: true },
-                    { feature: "Team Members", starter: "1", pro: "3", enterprise: "Unlimited" },
-                    { feature: "Custom Domains", starter: false, pro: true, enterprise: true },
-                    { feature: "Priority Support", starter: false, pro: true, enterprise: true },
-                    { feature: "API Access", starter: false, pro: true, enterprise: true },
-                    { feature: "Uptime SLA", starter: "99.9%", pro: "99.95%", enterprise: "99.99%" },
-                  ].map((row, index) => (
-                    <tr key={index} className={`border-b border-gray-200 ${index % 2 === 1 ? 'bg-gray-50/50' : ''}`}>
+                  {[{
+                  feature: "Number of Subdomains",
+                  starter: "1",
+                  pro: "5",
+                  enterprise: "Unlimited"
+                }, {
+                  feature: "Storage",
+                  starter: "5GB",
+                  pro: "25GB",
+                  enterprise: "100GB"
+                }, {
+                  feature: "SSL Certificates",
+                  starter: "Basic",
+                  pro: "Advanced",
+                  enterprise: "Premium"
+                }, {
+                  feature: "Redirects",
+                  starter: "Simple",
+                  pro: "Advanced",
+                  enterprise: "Advanced"
+                }, {
+                  feature: "Custom Landing Pages",
+                  starter: false,
+                  pro: true,
+                  enterprise: true
+                }, {
+                  feature: "Analytics",
+                  starter: "Basic",
+                  pro: "Detailed",
+                  enterprise: "Enterprise"
+                }, {
+                  feature: "Wildcard DNS",
+                  starter: false,
+                  pro: false,
+                  enterprise: true
+                }, {
+                  feature: "Team Members",
+                  starter: "1",
+                  pro: "3",
+                  enterprise: "Unlimited"
+                }, {
+                  feature: "Custom Domains",
+                  starter: false,
+                  pro: true,
+                  enterprise: true
+                }, {
+                  feature: "Priority Support",
+                  starter: false,
+                  pro: true,
+                  enterprise: true
+                }, {
+                  feature: "API Access",
+                  starter: false,
+                  pro: true,
+                  enterprise: true
+                }, {
+                  feature: "Uptime SLA",
+                  starter: "99.9%",
+                  pro: "99.95%",
+                  enterprise: "99.99%"
+                }].map((row, index) => <tr key={index} className={`border-b border-gray-200 ${index % 2 === 1 ? 'bg-gray-50/50' : ''}`}>
                       <td className="py-4 px-6 font-medium">{row.feature}</td>
                       <td className="py-4 px-6 text-center">
-                        {typeof row.starter === 'boolean' ? (
-                          row.starter ? (
-                            <CheckCircle className="h-5 w-5 text-green-500 mx-auto" />
-                          ) : (
-                            <XCircle className="h-5 w-5 text-gray-300 mx-auto" />
-                          )
-                        ) : (
-                          row.starter
-                        )}
+                        {typeof row.starter === 'boolean' ? row.starter ? <CheckCircle className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-gray-300 mx-auto" /> : row.starter}
                       </td>
                       <td className="py-4 px-6 text-center bg-clay-lavender/10">
-                        {typeof row.pro === 'boolean' ? (
-                          row.pro ? (
-                            <CheckCircle className="h-5 w-5 text-green-500 mx-auto" />
-                          ) : (
-                            <XCircle className="h-5 w-5 text-gray-300 mx-auto" />
-                          )
-                        ) : (
-                          row.pro
-                        )}
+                        {typeof row.pro === 'boolean' ? row.pro ? <CheckCircle className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-gray-300 mx-auto" /> : row.pro}
                       </td>
                       <td className="py-4 px-6 text-center">
-                        {typeof row.enterprise === 'boolean' ? (
-                          row.enterprise ? (
-                            <CheckCircle className="h-5 w-5 text-green-500 mx-auto" />
-                          ) : (
-                            <XCircle className="h-5 w-5 text-gray-300 mx-auto" />
-                          )
-                        ) : (
-                          row.enterprise
-                        )}
+                        {typeof row.enterprise === 'boolean' ? row.enterprise ? <CheckCircle className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-gray-300 mx-auto" /> : row.enterprise}
                       </td>
-                    </tr>
-                  ))}
+                    </tr>)}
                 </tbody>
               </table>
             </div>
@@ -207,8 +216,6 @@ const PricingPage = () => {
         </section>
       </main>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default PricingPage;
