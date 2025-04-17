@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,17 +88,17 @@ const DomainAvailabilityChecker: React.FC<DomainAvailabilityCheckerProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
       <div className="col-span-2">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-400 mb-2">
           Domain Name
         </label>
-        <div className="flex">
+        <div className="flex items-center bg-[#1A1F2C]/80 rounded-full overflow-hidden border border-[#0FA0CE] shadow-[0_0_10px_rgba(15,160,206,0.1)]">
           <Input
-            className="rounded-r-none"
-            placeholder="yourdomain"
+            className="flex-1 bg-transparent border-0 text-white placeholder-gray-500 focus:ring-0 text-lg rounded-none"
+            placeholder="yourname"
             value={newDomain}
             onChange={handleNewDomainChange}
           />
-          <span className="inline-flex items-center px-3 text-gray-500 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md">
+          <span className="inline-flex items-center px-4 text-gray-400 text-lg">
             .{domainSuffix}
           </span>
         </div>
