@@ -16,21 +16,19 @@ const SidebarButton = ({
   active, 
   onClick, 
   icon, 
-  label,
-  hidden = false  // Add a new prop to control visibility
+  label 
 }: { 
   active: boolean; 
   onClick: () => void; 
   icon: React.ReactNode; 
   label: string;
-  hidden?: boolean;  // Optional prop with default false
 }) => (
   <button 
     className={`w-full py-2 px-3 rounded-lg flex items-center transition-all duration-300 ${
       active 
         ? "bg-gray-800/70 text-green-400 font-medium border-l-2 border-green-400" 
         : "text-gray-300 hover:bg-gray-800/30 hover:text-gray-100"
-    } ${hidden ? "opacity-0 pointer-events-none" : ""}`}  // Add conditional classes for hiding
+    }`}
     onClick={onClick}
   >
     {React.cloneElement(icon as React.ReactElement, { 
@@ -66,7 +64,6 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         
         <nav className="space-y-1">
           <SidebarButton
-            hidden={true}  // Hide this specific button
             active={activeTab === "domains"}
             onClick={() => setActiveTab("domains")}
             icon={<Globe />}
