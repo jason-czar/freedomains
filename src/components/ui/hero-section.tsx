@@ -43,24 +43,7 @@ const HeroSection = () => {
         
         <DomainSearch />
         
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-indigo-600">10K+</div>
-            <p className="text-gray-600">Domains Registered</p>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-indigo-600">99.9%</div>
-            <p className="text-gray-600">Uptime</p>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-indigo-600">5K+</div>
-            <p className="text-gray-600">Happy Customers</p>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-indigo-600">24/7</div>
-            <p className="text-gray-600">Expert Support</p>
-          </div>
-        </div>
+        
       </div>
     </section>;
 };
