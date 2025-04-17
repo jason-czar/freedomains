@@ -1,9 +1,7 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import DomainSearch from "@/components/ui/domain-search"
-
+import DomainSearch from "@/components/ui/domain-search";
 const HeroSection = () => {
   return <section className="pt-20 pb-32 relative overflow-hidden bg-gradient-to-b from-transparent to-[#1E1E1E]">
       {/* Clay-like decorative blobs */}
