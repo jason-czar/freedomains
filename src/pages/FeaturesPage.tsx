@@ -52,7 +52,7 @@ const FeaturesPage = () => {
       <Navbar />
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="py-20 bg-clay-lavender/10">
+        <section className="py-20 bg-[#08070e]">
           <div className="clay-container">
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6">
