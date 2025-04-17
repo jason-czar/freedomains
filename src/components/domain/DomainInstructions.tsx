@@ -1,12 +1,9 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, Info } from "lucide-react";
-
 const DomainInstructions: React.FC = () => {
-  return (
-    <div className="mt-8">
+  return <div className="mt-8">
       <h3 className="text-xl font-semibold mb-4">Domain Registration Instructions</h3>
       
       <Tabs defaultValue="general" className="w-full">
@@ -68,10 +65,7 @@ const DomainInstructions: React.FC = () => {
                   <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
                   <span>Use <strong>CNAME records</strong> to create aliases to other domains.</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
-                  <span>Set up <strong>MX records</strong> for email services.</span>
-                </li>
+                
               </ul>
             </CardContent>
           </Card>
@@ -107,8 +101,6 @@ const DomainInstructions: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default DomainInstructions;
