@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -152,7 +151,7 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
         setRegistrationType={setRegistrationType}
       />
       
-      <div className="w-full md:w-1/2 mx-auto"> {/* Added responsive width */}
+      <div className="w-full md:w-1/2 mx-auto">
         <DomainAvailabilityChecker
           newDomain={newDomain}
           setNewDomain={setNewDomain}
@@ -163,7 +162,7 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
         />
       </div>
       
-      <div className="mt-4">
+      <div className="mt-4 flex justify-center">
         <RegisterDomainButton 
           onClick={registerDomain}
           disabled={isRegisterButtonDisabled}
@@ -175,4 +174,3 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
 };
 
 export default DomainRegistrationForm;
-
