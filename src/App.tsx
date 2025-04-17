@@ -17,6 +17,7 @@ import DomainManagementPage from "./pages/DomainManagementPage";
 import SettingsPage from "./pages/SettingsPage";
 import SubdomainLandingPage from "./pages/SubdomainLandingPage";
 import ContactPage from "./pages/ContactPage";
+import BillingPage from "./pages/BillingPage";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +28,6 @@ const App = () => (
         <AuthProvider>
           <Toaster />
           <Sonner />
-          {/* Add AI debug helper that runs in the background */}
           <AiDebugHelper enabled={import.meta.env.DEV} />
           <Routes>
             <Route path="/" element={<Index />} />
@@ -51,9 +51,12 @@ const App = () => (
                 <SettingsPage />
               </ProtectedRoute>
             } />
-            {/* Add subdomain landing page route */}
             <Route path="/domain/:subdomain" element={<SubdomainLandingPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/billing" element={
+              <ProtectedRoute>
+                <BillingPage />
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

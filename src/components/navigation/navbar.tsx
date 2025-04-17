@@ -88,9 +88,11 @@ const Navbar = () => {
                       <span>Analytics</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleBillingNavigation}>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    <span>Billing</span>
+                  <DropdownMenuItem asChild>
+                    <Link to="/billing">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      <span>Billing</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/settings">
@@ -163,7 +165,7 @@ const Navbar = () => {
                     Analytics
                   </Button>
                 </Link>
-                <Link to="/dashboard?tab=billing" onClick={() => setMobileMenuOpen(false)}>
+                <Link to="/billing" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="ghost" className="clay-button bg-white text-indigo-600 w-full justify-start mt-2">
                     <CreditCard className="mr-2 h-4 w-4" />
                     Billing
