@@ -7,9 +7,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="h-10 w-10 rounded-clay-lg bg-gradient-to-br from-clay-lavender to-clay-blue shadow-clay-sm flex items-center justify-center">
-                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-indigo-700 to-blue-700">D</span>
-              </div>
+              
               <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-br from-indigo-700 to-blue-700">Domain Channel</span>
             </Link>
             <p className="mt-4 text-gray-600 text-sm">
