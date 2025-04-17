@@ -83,7 +83,7 @@ const Navbar = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard?tab=analytics">
+                    <Link to="/analytics">
                       <LineChart className="mr-2 h-4 w-4" />
                       <span>Analytics</span>
                     </Link>
@@ -159,7 +159,7 @@ const Navbar = () => {
                     Dashboard
                   </Button>
                 </Link>
-                <Link to="/dashboard?tab=analytics" onClick={() => setMobileMenuOpen(false)}>
+                <Link to="/analytics" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="ghost" className="clay-button bg-white text-indigo-600 w-full justify-start mt-2">
                     <LineChart className="mr-2 h-4 w-4" />
                     Analytics
