@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,7 @@ import SubdomainLandingPage from "./pages/SubdomainLandingPage";
 import ContactPage from "./pages/ContactPage";
 import BillingPage from "./pages/BillingPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import LandingPageBuilderPage from "./pages/LandingPageBuilderPage";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +41,11 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/landing-page-builder/:domainId" element={
+              <ProtectedRoute>
+                <LandingPageBuilderPage />
               </ProtectedRoute>
             } />
             <Route path="/domains" element={

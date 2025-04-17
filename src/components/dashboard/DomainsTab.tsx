@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -31,6 +30,10 @@ const DomainsTab: React.FC<DomainsTabProps> = ({
   const filteredDomains = domains.filter(domain => 
     domain.subdomain.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleEditDomain = (domainId: string) => {
+    navigate(`/landing-page-builder/${domainId}`);
+  };
 
   return (
     <div>

@@ -5,7 +5,6 @@ import Footer from "@/components/navigation/footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import LandingPageBuilder from "@/components/ui/landing-page-builder";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import DNSRecordManager from "@/components/ui/dns-record-manager";
 
@@ -32,8 +31,7 @@ const DashboardPage = () => {
     }
     const domainId = searchParams.get('domain');
     if (domainId) {
-      setSelectedDomain(domainId);
-      setActiveTab('editor');
+      navigate(`/landing-page-builder/${domainId}`);
     }
   }, [user, searchParams]);
 
@@ -77,8 +75,6 @@ const DashboardPage = () => {
                 openDnsManager={openDnsManager}
               />
             )}
-            
-            {activeTab === "editor" && selectedDomain && <LandingPageBuilder />}
             
             {activeTab === "analytics" && <AnalyticsTab />}
             
