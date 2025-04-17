@@ -55,9 +55,13 @@ const DomainsTab: React.FC<DomainsTabProps> = ({
         />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <DomainQuickStats domains={domains} />
-        <DomainRecentActivity domains={domains} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:grid-flow-row-dense md:grid-cols-2">
+        <div className="md:col-span-2 lg:col-span-1">
+          <DomainQuickStats domains={domains} />
+        </div>
+        <div className="md:col-span-2 lg:col-span-1">
+          <DomainRecentActivity domains={domains} />
+        </div>
       </div>
     </div>
   );
