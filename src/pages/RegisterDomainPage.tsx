@@ -14,8 +14,8 @@ const RegisterDomainPage = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow bg-clay-base/30 py-10">
-        <div className="clay-container">
+      <main className="flex-grow bg-clay-base/30 py-10 flex items-center justify-center">
+        <div className="clay-container w-full">
           <div className="clay-card mb-6">
             <h2 className="text-2xl font-bold mb-6">Register New Domain</h2>
             <DomainRegistrationForm fetchDomains={fetchDomains} />
