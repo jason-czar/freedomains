@@ -25,15 +25,34 @@ const NotFound = () => {
         
         console.log("Checking hostname:", hostname);
         
+        // Handle apex domain with or without www
+        if (hostname === "com.channel" || hostname === "www.com.channel") {
+          console.log("Detected apex domain access");
+          // This is the main site - allow it to render normally
+          setChecking(false);
+          return;
+        }
+        
         // Extract potential subdomain - handle both .com.channel and direct subdomain access
         let subdomain = null;
         
         if (hostname.endsWith(".com.channel")) {
           // Format: subdomain.com.channel
-          subdomain = hostname.split(".")[0];
+          const parts = hostname.split(".");
+          // If it's www.com.channel, we've already handled it above
+          if (parts[0] === "www" && parts.length === 3) {
+            setChecking(false);
+            return;
+          }
+          subdomain = parts[0];
         } else if (hostname.includes(".")) {
           // Format could be subdomain.yourdomain.com
           subdomain = hostname.split(".")[0];
+          // If it's www, treat it as the main domain
+          if (subdomain === "www") {
+            setChecking(false);
+            return;
+          }
         }
         
         if (subdomain) {
