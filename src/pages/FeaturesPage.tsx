@@ -105,7 +105,7 @@ const FeaturesPage = () => {
         </section>
         
         {/* CTA Section */}
-        <section className="py-20">
+        <section className="py-20 bg-[#08070e]">
           <div className="clay-container">
             <div className="clay-panel max-w-4xl mx-auto text-center">
               <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
