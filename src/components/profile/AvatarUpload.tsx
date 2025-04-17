@@ -47,8 +47,12 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         throw uploadError;
       }
 
-      const avatarUrl = `${supabase.storageUrl}/object/public/avatars/${filePath}`;
-      onAvatarChange(avatarUrl);
+      // Get the public URL using getPublicUrl method instead of accessing storageUrl directly
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      onAvatarChange(publicUrl);
       toast.success('Avatar updated successfully');
     } catch (error) {
       toast.error('Error uploading avatar');
