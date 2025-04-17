@@ -46,7 +46,7 @@ const Navbar = () => {
             <div className="h-12 w-12 rounded-clay-lg bg-gradient-to-br from-clay-lavender to-clay-blue shadow-clay-sm flex items-center justify-center">
               <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-indigo-700 to-blue-700">D</span>
             </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-indigo-700 to-blue-700">Domain Channel</span>
+            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-[#11BA81] to-[#4ADE80]">GetMy.com.channel</span>
           </Link>
           
           {/* Desktop Navigation */}
