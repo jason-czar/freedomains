@@ -34,7 +34,7 @@ const HeroSection = () => {
               </Button>
             </Link>
             <Link to="/features">
-              <Button variant="ghost" className="clay-button bg-white text-indigo-600 text-lg px-8 py-4">
+              <Button variant="ghost" className="clay-button text-lg px-8 py-4 bg-[#5c5c5c]/65 text-green-400">
                 Learn More
               </Button>
             </Link>
