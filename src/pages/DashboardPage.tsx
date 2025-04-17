@@ -17,7 +17,7 @@ import BillingTab from "@/components/dashboard/BillingTab";
 import SettingsTab from "@/components/dashboard/SettingsTab";
 
 const DashboardPage = () => {
-  const [activeTab, setActiveTab] = useState("domains");
+  const [activeTab, setActiveTab] = useState("domains"); // Explicitly set default to "domains"
   const [domains, setDomains] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
