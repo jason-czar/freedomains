@@ -13,7 +13,7 @@ const HeroSection = () => {
       animationDelay: "2s"
     }}></div>
       
-      <div className="clay-container relative z-10">
+      <div className="clay-container relative z-10 py-[23px]">
         <div className="max-w-4xl mx-auto text-center mb-16">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
             Find Your Perfect{" "}
