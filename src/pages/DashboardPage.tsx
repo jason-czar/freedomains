@@ -6,28 +6,26 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LandingPageBuilder from "@/components/ui/landing-page-builder";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import DNSRecordManager from "@/components/ui/dns-record-manager";
 
 // Import dashboard components
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DomainsTab from "@/components/dashboard/DomainsTab";
 import AnalyticsTab from "@/components/dashboard/AnalyticsTab";
 import BillingTab from "@/components/dashboard/BillingTab";
 import SettingsTab from "@/components/dashboard/SettingsTab";
 
 const DashboardPage = () => {
-  const [activeTab, setActiveTab] = useState("domains"); // Explicitly set default to "domains"
+  const [activeTab, setActiveTab] = useState("domains");
   const [domains, setDomains] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [dnsModalOpen, setDnsModalOpen] = useState(false);
   const [selectedDomainForDNS, setSelectedDomainForDNS] = useState<any>(null);
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+
   useEffect(() => {
     if (user) {
       fetchDomains();
@@ -38,6 +36,7 @@ const DashboardPage = () => {
       setActiveTab('editor');
     }
   }, [user, searchParams]);
+
   const fetchDomains = async () => {
     setLoading(true);
     try {
@@ -56,57 +55,57 @@ const DashboardPage = () => {
       setLoading(false);
     }
   };
+
   const openDnsManager = (domain: any) => {
     setSelectedDomainForDNS(domain);
     setDnsModalOpen(true);
   };
-  return <div className="min-h-screen flex flex-col">
+
+  return (
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow bg-clay-base/30 py-10">
         <div className="clay-container">
-          <div className="flex flex-col md:flex-row gap-8">
-            <DashboardSidebar 
-              activeTab={activeTab} 
-              setActiveTab={setActiveTab} 
-              selectedDomain={selectedDomain} 
-              domains={domains} 
-              navigate={navigate} 
-            />
-            
-            <div className="flex-1">
-              {activeTab === "domains" && <DomainsTab 
+          <div className="flex-1">
+            {activeTab === "domains" && (
+              <DomainsTab 
                 domains={domains} 
                 loading={loading} 
                 fetchDomains={fetchDomains} 
                 setSelectedDomain={setSelectedDomain} 
                 setActiveTab={setActiveTab} 
                 openDnsManager={openDnsManager}
-              />}
-              
-              {activeTab === "editor" && selectedDomain && <LandingPageBuilder />}
-              
-              {activeTab === "analytics" && <AnalyticsTab />}
-              
-              {activeTab === "billing" && <BillingTab />}
-              
-              {activeTab === "settings" && <SettingsTab />}
-            </div>
+              />
+            )}
+            
+            {activeTab === "editor" && selectedDomain && <LandingPageBuilder />}
+            
+            {activeTab === "analytics" && <AnalyticsTab />}
+            
+            {activeTab === "billing" && <BillingTab />}
+            
+            {activeTab === "settings" && <SettingsTab />}
           </div>
         </div>
       </main>
       
       <Dialog open={dnsModalOpen} onOpenChange={setDnsModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            
-          </DialogHeader>
-          
-          {selectedDomainForDNS && <DNSRecordManager domainId={selectedDomainForDNS.id} subdomain={selectedDomainForDNS.subdomain} domainSuffix={selectedDomainForDNS.settings?.domain_suffix || "com.channel"} onRefresh={fetchDomains} />}
+          <DialogHeader></DialogHeader>
+          {selectedDomainForDNS && (
+            <DNSRecordManager 
+              domainId={selectedDomainForDNS.id}
+              subdomain={selectedDomainForDNS.subdomain}
+              domainSuffix={selectedDomainForDNS.settings?.domain_suffix || "com.channel"}
+              onRefresh={fetchDomains}
+            />
+          )}
         </DialogContent>
       </Dialog>
       
       <Footer />
-    </div>;
+    </div>
+  );
 };
 
 export default DashboardPage;
