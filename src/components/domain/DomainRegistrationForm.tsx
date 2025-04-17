@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import DomainAvailabilityChecker from "./DomainAvailabilityChecker";
 import RegistrationTabs from "./RegistrationTabs";
 import RegisterDomainButton from "./RegisterDomainButton";
+import { getSearchParam } from "@/utils/urlParams";
 
 interface DomainRegistrationFormProps {
   fetchDomains: () => Promise<void>;
@@ -127,6 +127,20 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
   const isRegisterButtonDisabled = !isAvailable || 
     !validateDomainName(newDomain) || 
     creatingDomain;
+
+  useEffect(() => {
+    const domainParam = getSearchParam();
+    if (domainParam) {
+      setNewDomain(domainParam);
+      // Trigger the availability check after a short delay to ensure the component is fully mounted
+      setTimeout(() => {
+        const checkAvailabilityButton = document.querySelector('[data-action="check-availability"]') as HTMLButtonElement;
+        if (checkAvailabilityButton) {
+          checkAvailabilityButton.click();
+        }
+      }, 100);
+    }
+  }, []);
 
   return (
     <div className="mb-6">
