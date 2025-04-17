@@ -9,7 +9,7 @@ const Index = () => {
       <Navbar />
       <main className="flex-grow">
         <HeroSection />
-        <div className="py-12 bg-clay-mint/0 backdrop-blur-3xl animate-float">
+        <div className="py-12 bg-[#08070e]">
           <FeaturesSection />
         </div>
         <PricingPlans className="py-16" />
