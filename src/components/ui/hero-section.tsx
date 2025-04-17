@@ -1,22 +1,23 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import DomainSearch from "@/components/ui/domain-search";
-
 const HeroSection = () => {
-  return (
-    <section className="pt-20 pb-32 relative overflow-hidden">
+  return <section className="pt-20 pb-32 relative overflow-hidden">
       {/* Clay-like decorative blobs */}
       <div className="absolute top-20 right-[10%] h-64 w-64 rounded-full bg-clay-lavender/40 blur-3xl animate-float"></div>
-      <div className="absolute bottom-20 left-[5%] h-40 w-40 rounded-full bg-clay-mint/30 blur-3xl animate-float" style={{ animationDelay: "1s" }}></div>
-      <div className="absolute top-40 left-[15%] h-72 w-72 rounded-full bg-clay-blue/20 blur-3xl animate-float" style={{ animationDelay: "2s" }}></div>
+      <div className="absolute bottom-20 left-[5%] h-40 w-40 rounded-full bg-clay-mint/30 blur-3xl animate-float" style={{
+      animationDelay: "1s"
+    }}></div>
+      <div className="absolute top-40 left-[15%] h-72 w-72 rounded-full bg-clay-blue/20 blur-3xl animate-float" style={{
+      animationDelay: "2s"
+    }}></div>
       
       <div className="clay-container relative z-10">
         <div className="max-w-4xl mx-auto text-center mb-16">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
             Find Your Perfect{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-500">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#11BA81] to-[#4ADE80]">
               Subdomain
             </span>
           </h1>
@@ -61,8 +62,6 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default HeroSection;
