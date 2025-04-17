@@ -28,7 +28,7 @@ const Footer = () => {
           
           {/* Resources */}
           <div>
-            <h3 className="text-gray-800 font-semibold mb-4">Resources</h3>
+            <h3 className="font-semibold mb-4 text-slate-50">Resources</h3>
             <ul className="space-y-2">
               <li><Link to="/help" className="text-gray-600 hover:text-indigo-600 text-sm">Help Center</Link></li>
               <li><Link to="/api" className="text-gray-600 hover:text-indigo-600 text-sm">API Documentation</Link></li>
