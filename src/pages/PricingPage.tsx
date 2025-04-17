@@ -3,6 +3,7 @@ import Navbar from "@/components/navigation/navbar";
 import Footer from "@/components/navigation/footer";
 import PricingPlans from "@/components/ui/pricing-plans";
 import { CheckCircle, XCircle } from "lucide-react";
+
 const PricingPage = () => {
   return <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -218,4 +219,5 @@ const PricingPage = () => {
       <Footer />
     </div>;
 };
+
 export default PricingPage;
