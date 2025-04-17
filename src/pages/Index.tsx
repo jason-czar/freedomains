@@ -7,7 +7,7 @@ import PricingPlans from "@/components/ui/pricing-plans";
 const Index = () => {
   return <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow">
+      <main className="flex-grow bg-[#08070e]">
         <HeroSection />
         <div className="py-12 bg-[#08070e]">
           <FeaturesSection />
