@@ -38,7 +38,7 @@ const Navbar = () => {
     if (link.guestOnly && user) return false;
     return true;
   });
-  return <nav className="backdrop-blur-sm sticky top-0 bg-black/[0.36]">
+  return <nav className="backdrop-blur-sm sticky top-0 z-50 bg-black/[0.36]">
       <div className="clay-container">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
