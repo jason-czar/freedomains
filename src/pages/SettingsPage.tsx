@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/navigation/navbar";
 import Footer from "@/components/navigation/footer";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -177,11 +176,4 @@ const SettingsPage = () => {
   );
 };
 
-// Wrap the component with ProtectedRoute to prevent unauthorized access
-const ProtectedSettingsPage = () => (
-  <ProtectedRoute>
-    <SettingsPage />
-  </ProtectedRoute>
-);
-
-export default ProtectedSettingsPage;
+export default SettingsPage;

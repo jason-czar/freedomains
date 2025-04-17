@@ -44,7 +44,11 @@ const App = () => (
                 <DomainManagementPage />
               </ProtectedRoute>
             } />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
