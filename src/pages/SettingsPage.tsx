@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/navigation/navbar";
@@ -7,18 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2, User as UserIcon } from "lucide-react";
+import AvatarUpload from "@/components/profile/AvatarUpload";
 
 const SettingsPage = () => {
   const { user, profile, profileLoading, updateProfile } = useAuth();
   const [fullName, setFullName] = useState(profile?.full_name || "");
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [saving, setSaving] = useState(false);
 
   React.useEffect(() => {
-    // Update form when profile data loads
     if (profile) {
       setFullName(profile.full_name || "");
-      setAvatarUrl(profile.avatar_url || "");
     }
   }, [profile]);
 
@@ -29,11 +26,12 @@ const SettingsPage = () => {
     try {
       const { error } = await updateProfile({
         full_name: fullName,
-        avatar_url: avatarUrl
       });
 
       if (error) {
         toast.error("Failed to update profile");
+      } else {
+        toast.success("Profile updated successfully");
       }
     } finally {
       setSaving(false);
@@ -69,9 +67,9 @@ const SettingsPage = () => {
                 <h3 className="text-lg font-semibold mb-4">Profile</h3>
                 <div className="flex items-center mb-6">
                   <div className="mr-4">
-                    {avatarUrl ? (
+                    {profile?.avatar_url ? (
                       <img 
-                        src={avatarUrl} 
+                        src={profile.avatar_url} 
                         alt={fullName} 
                         className="w-20 h-20 rounded-full object-cover border-2 border-indigo-100"
                       />
@@ -84,14 +82,14 @@ const SettingsPage = () => {
                   <div>
                     <p className="text-sm font-medium mb-1">Profile Picture</p>
                     <p className="text-xs text-gray-500 mb-2">
-                      For best results, use an image at least 128px by 128px in .jpg or .png format
+                      Upload a new profile picture in JPG or PNG format
                     </p>
-                    <Input
-                      type="text"
-                      value={avatarUrl}
-                      onChange={(e) => setAvatarUrl(e.target.value)}
-                      placeholder="Enter image URL"
-                      className="clay-input max-w-md"
+                    <AvatarUpload
+                      userId={user?.id || ""}
+                      currentAvatarUrl={profile?.avatar_url || null}
+                      onAvatarChange={(url) => {
+                        updateProfile({ avatar_url: url });
+                      }}
                     />
                   </div>
                 </div>
