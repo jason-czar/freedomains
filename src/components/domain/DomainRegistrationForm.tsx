@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -151,14 +152,16 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
         setRegistrationType={setRegistrationType}
       />
       
-      <DomainAvailabilityChecker
-        newDomain={newDomain}
-        setNewDomain={setNewDomain}
-        isAvailable={isAvailable}
-        setIsAvailable={setIsAvailable}
-        domainSuffix={domainSuffix}
-        validateDomainName={validateDomainName}
-      />
+      <div className="w-full md:w-1/2 mx-auto"> {/* Added responsive width */}
+        <DomainAvailabilityChecker
+          newDomain={newDomain}
+          setNewDomain={setNewDomain}
+          isAvailable={isAvailable}
+          setIsAvailable={setIsAvailable}
+          domainSuffix={domainSuffix}
+          validateDomainName={validateDomainName}
+        />
+      </div>
       
       <div className="mt-4">
         <RegisterDomainButton 
@@ -172,3 +175,4 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
 };
 
 export default DomainRegistrationForm;
+
