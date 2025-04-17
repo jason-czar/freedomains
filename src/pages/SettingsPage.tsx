@@ -7,27 +7,29 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2, User as UserIcon } from "lucide-react";
 import AvatarUpload from "@/components/profile/AvatarUpload";
-
 const SettingsPage = () => {
-  const { user, profile, profileLoading, updateProfile } = useAuth();
+  const {
+    user,
+    profile,
+    profileLoading,
+    updateProfile
+  } = useAuth();
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [saving, setSaving] = useState(false);
-
   React.useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || "");
     }
   }, [profile]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-
     try {
-      const { error } = await updateProfile({
-        full_name: fullName,
+      const {
+        error
+      } = await updateProfile({
+        full_name: fullName
       });
-
       if (error) {
         toast.error("Failed to update profile");
       } else {
@@ -37,22 +39,17 @@ const SettingsPage = () => {
       setSaving(false);
     }
   };
-
   if (profileLoading) {
-    return (
-      <div className="min-h-screen flex flex-col">
+    return <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
           <span className="ml-2">Loading profile...</span>
         </main>
         <Footer />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow py-10 bg-clay-base/30">
         <div className="clay-container">
@@ -67,30 +64,20 @@ const SettingsPage = () => {
                 <h3 className="text-lg font-semibold mb-4">Profile</h3>
                 <div className="flex items-center mb-6">
                   <div className="mr-4">
-                    {profile?.avatar_url ? (
-                      <img 
-                        src={profile.avatar_url} 
-                        alt={fullName} 
-                        className="w-20 h-20 rounded-full object-cover border-2 border-indigo-100"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center">
-                        <UserIcon className="h-10 w-10 text-indigo-600" />
-                      </div>
-                    )}
+                    {profile?.avatar_url ? <img src={profile.avatar_url} alt={fullName} className="w-20 h-20 rounded-full object-cover border-2 border-indigo-100" /> : <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <UserIcon className="h-10 w-10 text-green-500" />
+                      </div>}
                   </div>
                   <div>
                     <p className="text-sm font-medium mb-1">Profile Picture</p>
                     <p className="text-xs text-gray-500 mb-2">
                       Upload a new profile picture in JPG or PNG format
                     </p>
-                    <AvatarUpload
-                      userId={user?.id || ""}
-                      currentAvatarUrl={profile?.avatar_url || null}
-                      onAvatarChange={(url) => {
-                        updateProfile({ avatar_url: url });
-                      }}
-                    />
+                    <AvatarUpload userId={user?.id || ""} currentAvatarUrl={profile?.avatar_url || null} onAvatarChange={url => {
+                    updateProfile({
+                      avatar_url: url
+                    });
+                  }} />
                   </div>
                 </div>
 
@@ -99,22 +86,13 @@ const SettingsPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Full Name
                     </label>
-                    <Input 
-                      className="clay-input" 
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Your name"
-                    />
+                    <Input className="clay-input" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Your name" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Email Address
                     </label>
-                    <Input 
-                      className="clay-input bg-gray-50" 
-                      value={user?.email || ""}
-                      disabled
-                    />
+                    <Input className="clay-input bg-gray-50" value={user?.email || ""} disabled />
                     <p className="text-xs text-gray-500 mt-1">
                       Email address cannot be changed
                     </p>
@@ -125,24 +103,24 @@ const SettingsPage = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-4">Notification Preferences</h3>
                 <div className="space-y-3">
-                  {[
-                    { id: "email-marketing", label: "Marketing emails" },
-                    { id: "email-system", label: "System notifications" },
-                    { id: "email-billing", label: "Billing updates" },
-                    { id: "email-security", label: "Security alerts" },
-                  ].map((pref) => (
-                    <div key={pref.id} className="flex items-center">
-                      <input
-                        id={pref.id}
-                        type="checkbox"
-                        defaultChecked={pref.id !== "email-marketing"}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                      />
+                  {[{
+                  id: "email-marketing",
+                  label: "Marketing emails"
+                }, {
+                  id: "email-system",
+                  label: "System notifications"
+                }, {
+                  id: "email-billing",
+                  label: "Billing updates"
+                }, {
+                  id: "email-security",
+                  label: "Security alerts"
+                }].map(pref => <div key={pref.id} className="flex items-center">
+                      <input id={pref.id} type="checkbox" defaultChecked={pref.id !== "email-marketing"} className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
                       <label htmlFor={pref.id} className="ml-2 block text-sm text-gray-700">
                         {pref.label}
                       </label>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
               </div>
               
@@ -150,19 +128,11 @@ const SettingsPage = () => {
                 <Button type="button" variant="ghost" className="clay-button bg-white text-gray-700">
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
-                  className="clay-button-primary"
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <>
+                <Button type="submit" className="clay-button-primary" disabled={saving}>
+                  {saving ? <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Saving...
-                    </>
-                  ) : (
-                    "Save Changes"
-                  )}
+                    </> : "Save Changes"}
                 </Button>
               </div>
             </form>
@@ -170,8 +140,6 @@ const SettingsPage = () => {
         </div>
       </main>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default SettingsPage;
