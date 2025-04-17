@@ -16,6 +16,7 @@ import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 import DomainManagementPage from "./pages/DomainManagementPage";
 import SettingsPage from "./pages/SettingsPage";
+import SubdomainLandingPage from "./pages/SubdomainLandingPage";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,8 @@ const App = () => (
                 <SettingsPage />
               </ProtectedRoute>
             } />
+            {/* Add subdomain landing page route */}
+            <Route path="/domain/:subdomain" element={<SubdomainLandingPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
