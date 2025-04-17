@@ -22,28 +22,50 @@ const NotFound = () => {
         // Get the hostname from the browser
         const hostname = window.location.hostname;
         
-        // Check if it's a potential subdomain.com.channel format
+        console.log("Checking hostname:", hostname);
+        
+        // Extract potential subdomain - handle both .com.channel and direct subdomain access
+        let subdomain = null;
+        
         if (hostname.endsWith(".com.channel")) {
-          // Extract the subdomain part
-          const subdomain = hostname.split(".")[0];
+          // Format: subdomain.com.channel
+          subdomain = hostname.split(".")[0];
+        } else if (hostname.includes(".")) {
+          // Format could be subdomain.yourdomain.com
+          subdomain = hostname.split(".")[0];
+        }
+        
+        if (subdomain) {
+          console.log("Detected potential subdomain:", subdomain);
           
-          if (subdomain) {
-            try {
-              // Check if this subdomain exists in our database
-              const { data, error } = await supabase
-                .from("domains")
-                .select("id")
-                .eq("subdomain", subdomain)
-                .maybeSingle();
+          try {
+            // Check if this subdomain exists in our database
+            const { data, error } = await supabase
+              .from("domains")
+              .select("id, settings, is_active")
+              .eq("subdomain", subdomain)
+              .maybeSingle();
+            
+            if (error) throw error;
+            
+            if (data) {
+              console.log("Found domain data:", data);
               
-              if (data) {
-                // Redirect to the subdomain landing page
-                navigate(`/domain/${subdomain}`);
+              // Check if domain has forwarding settings
+              if (data.settings?.forwarding?.url) {
+                console.log("Forwarding to:", data.settings.forwarding.url);
+                window.location.href = data.settings.forwarding.url;
                 return;
               }
-            } catch (err) {
-              console.error("Error checking subdomain:", err);
+              
+              // Redirect to the subdomain landing page
+              navigate(`/domain/${subdomain}`);
+              return;
+            } else {
+              console.log("Subdomain not found in database");
             }
+          } catch (err) {
+            console.error("Error checking subdomain:", err);
           }
         }
       }

@@ -33,6 +33,18 @@ const AddRecordTabContent: React.FC<AddRecordTabContentProps> = ({
     try {
       setAdding(true);
       
+      // Special handling for _vercel CNAME record to ensure it's correct
+      if (
+        newRecord.type === "CNAME" && 
+        (newRecord.name === "_vercel" || newRecord.name.startsWith("_vercel."))
+      ) {
+        if (newRecord.content !== "cname.vercel-dns.com") {
+          // Automatically correct the content for Vercel CNAME
+          newRecord.content = "cname.vercel-dns.com";
+          toast.info("Vercel CNAME record content automatically set to 'cname.vercel-dns.com'");
+        }
+      }
+      
       const { data, error } = await supabase.functions.invoke("domain-dns", {
         body: {
           action: "add_record",

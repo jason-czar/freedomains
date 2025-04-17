@@ -63,9 +63,9 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
               proxied: true
             },
             {
-              type: "TXT",
+              type: "CNAME",
               name: `_vercel.${newDomain.trim()}`,
-              content: "vc-domain-verify=verification-token", // This will be updated by Vercel
+              content: "cname.vercel-dns.com",
               ttl: 1,
               proxied: false
             }
@@ -89,7 +89,9 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
           expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
           settings: {
             domain_suffix: domainSuffix,
-            delegation_type: "standard"
+            delegation_type: "standard",
+            dns_active: true,
+            vercel_cname_added: true
           }
         });
       

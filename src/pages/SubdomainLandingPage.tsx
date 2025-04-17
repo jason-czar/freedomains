@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/navigation/navbar";
@@ -11,6 +11,7 @@ const SubdomainLandingPage = () => {
   const [loading, setLoading] = useState(true);
   const [domainInfo, setDomainInfo] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDomainInfo = async () => {
@@ -34,6 +35,13 @@ const SubdomainLandingPage = () => {
           setError("Domain not found");
         } else {
           setDomainInfo(data);
+          
+          // Handle domain forwarding if configured
+          if (data.settings?.forwarding?.url) {
+            console.log(`Forwarding to ${data.settings.forwarding.url}`);
+            window.location.href = data.settings.forwarding.url;
+            return;
+          }
         }
       } catch (err: any) {
         console.error("Error fetching domain:", err);
@@ -44,7 +52,7 @@ const SubdomainLandingPage = () => {
     };
 
     fetchDomainInfo();
-  }, [subdomain]);
+  }, [subdomain, navigate]);
 
   if (loading) {
     return (
