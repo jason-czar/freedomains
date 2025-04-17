@@ -73,7 +73,7 @@ const Index = () => {
                     <a href="/signup" className="clay-button-primary">
                       Sign Up Now
                     </a>
-                    <a href="/contact" className="clay-button bg-white text-indigo-600">
+                    <a href="/contact" className="clay-button text-lg px-8 py-4 bg-[#5c5c5c]/65 text-green-400">
                       Contact Sales
                     </a>
                   </div>
