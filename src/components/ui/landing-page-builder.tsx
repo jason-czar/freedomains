@@ -1,5 +1,5 @@
-
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,6 +7,11 @@ import { PlusCircle, Trash2, MoveHorizontal, Image, Type, Layout, Box } from "lu
 
 const LandingPageBuilder = () => {
   const [activeTab, setActiveTab] = useState("editor");
+  const navigate = useNavigate();
+
+  const handleCancel = () => {
+    navigate("/domains");
+  };
   
   return (
     <div className="clay-panel">
@@ -21,7 +26,6 @@ const LandingPageBuilder = () => {
         
         <TabsContent value="editor">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {/* Components Sidebar */}
             <div className="clay-card">
               <h3 className="font-semibold mb-4">Components</h3>
               <div className="space-y-3">
@@ -47,7 +51,6 @@ const LandingPageBuilder = () => {
               </div>
             </div>
             
-            {/* Editor Main Area */}
             <div className="md:col-span-3">
               <div className="clay-card bg-gray-50 h-96 flex flex-col items-center justify-center">
                 <div className="text-center p-8">
@@ -60,7 +63,11 @@ const LandingPageBuilder = () => {
               </div>
               
               <div className="mt-6 flex justify-end space-x-3">
-                <Button variant="ghost" className="clay-button bg-white text-gray-700">
+                <Button 
+                  variant="ghost" 
+                  className="clay-button bg-white text-gray-700"
+                  onClick={handleCancel}
+                >
                   Cancel
                 </Button>
                 <Button className="clay-button-primary">
@@ -73,7 +80,6 @@ const LandingPageBuilder = () => {
         
         <TabsContent value="design">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {/* Design Sidebar */}
             <div className="clay-card">
               <h3 className="font-semibold mb-4">Design Settings</h3>
               <div className="space-y-4">
@@ -124,7 +130,6 @@ const LandingPageBuilder = () => {
               </div>
             </div>
             
-            {/* Design Preview Area */}
             <div className="md:col-span-3">
               <div className="clay-card bg-gray-50 h-96 flex flex-col items-center justify-center">
                 <div className="text-center p-8">
