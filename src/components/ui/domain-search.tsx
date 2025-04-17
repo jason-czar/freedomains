@@ -49,7 +49,7 @@ const DomainSearch = ({
       {isAvailable !== null && !isSearching && <div className={`mt-6 p-4 rounded-xl text-center ${isAvailable ? 'bg-emerald-900/30 border border-emerald-500/20' : 'bg-rose-900/30 border border-rose-500/20'}`}>
           {isAvailable ? <>
               <div className="text-xl font-bold mb-2 text-emerald-400">{subdomain}.com.channel is available!</div>
-              <Button className="mt-2 bg-black/40 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50">
+              <Button className="mt-2 bg-black/40 border border-emerald-500/30 hover:border-emerald-500/50 text-gray-950 text-base font-semibold">
                 Register Now
               </Button>
             </> : <div className="text-xl font-bold text-rose-400">Sorry, {subdomain}.com.channel is already taken.</div>}
