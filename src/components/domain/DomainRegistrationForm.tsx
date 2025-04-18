@@ -7,11 +7,9 @@ import DomainAvailabilityChecker from "./DomainAvailabilityChecker";
 import RegistrationTabs from "./RegistrationTabs";
 import RegisterDomainButton from "./RegisterDomainButton";
 import { getSearchParam } from "@/utils/urlParams";
-
 interface DomainRegistrationFormProps {
   fetchDomains: () => Promise<void>;
 }
-
 const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
   fetchDomains
 }) => {
@@ -20,99 +18,90 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
   const [creatingDomain, setCreatingDomain] = useState(false);
   const [domainSuffix, setDomainSuffix] = useState("com.channel");
   const [registrationType, setRegistrationType] = useState("standard");
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const navigate = useNavigate();
-
   const validateDomainName = (domain: string) => {
     // Basic validation: only alphanumeric and hyphens, between 3-63 characters
     const isValid = /^[a-z0-9-]{3,63}$/.test(domain) && !domain.startsWith('-') && !domain.endsWith('-');
     return isValid;
   };
-
   const registerDomain = async () => {
     if (!user) {
       toast.error("You must be logged in to register a domain");
       navigate("/login");
       return;
     }
-    
     if (!newDomain.trim()) {
       toast.error("Please enter a domain name");
       return;
     }
-    
     if (!isAvailable) {
       toast.error("This domain is not available");
       return;
     }
-    
     setCreatingDomain(true);
     try {
       // Create DNS records directly through Cloudflare
-      const { data: cfData, error: cfError } = await supabase.functions.invoke("domain-dns", {
-        body: { 
-          action: "create", 
+      const {
+        data: cfData,
+        error: cfError
+      } = await supabase.functions.invoke("domain-dns", {
+        body: {
+          action: "create",
           subdomain: newDomain.trim(),
           domain: domainSuffix,
-          records: [
-            {
-              type: "A",
-              name: newDomain.trim(),
-              content: "76.76.21.21",
-              ttl: 1,
-              proxied: true
-            },
-            {
-              type: "CNAME",
-              name: `_vercel.${newDomain.trim()}`,
-              content: "cname.vercel-dns.com",
-              ttl: 1,
-              proxied: false
-            }
-          ]
+          records: [{
+            type: "A",
+            name: newDomain.trim(),
+            content: "76.76.21.21",
+            ttl: 1,
+            proxied: true
+          }, {
+            type: "CNAME",
+            name: `_vercel.${newDomain.trim()}`,
+            content: "cname.vercel-dns.com",
+            ttl: 1,
+            proxied: false
+          }]
         }
       });
-      
       if (cfError) throw cfError;
-      
       if (!cfData.success) {
         throw new Error("Failed to create DNS records: " + JSON.stringify(cfData.cloudflareResponse?.errors));
       }
-      
+
       // Register in database
-      const { error: dbError } = await supabase
-        .from("domains")
-        .insert({
-          user_id: user.id,
-          subdomain: newDomain.trim(),
-          is_active: true,
-          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          settings: {
-            domain_suffix: domainSuffix,
-            delegation_type: "standard",
-            dns_active: true,
-            vercel_cname_added: true
-          }
-        });
-      
+      const {
+        error: dbError
+      } = await supabase.from("domains").insert({
+        user_id: user.id,
+        subdomain: newDomain.trim(),
+        is_active: true,
+        expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        settings: {
+          domain_suffix: domainSuffix,
+          delegation_type: "standard",
+          dns_active: true,
+          vercel_cname_added: true
+        }
+      });
       if (dbError) {
         // Rollback Cloudflare records if database insert fails
         await supabase.functions.invoke("domain-dns", {
-          body: { 
-            action: "delete", 
+          body: {
+            action: "delete",
             subdomain: newDomain.trim(),
             domain: domainSuffix
           }
         });
-        
         throw dbError;
       }
-      
       toast.success("Domain registered successfully!");
       toast.info(`Domain ${newDomain}.${domainSuffix} is ready to use. You can now manage DNS records through the DNS Manager.`, {
-        duration: 10000,
+        duration: 10000
       });
-      
       setNewDomain("");
       setIsAvailable(null);
       fetchDomains();
@@ -123,11 +112,7 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
       setCreatingDomain(false);
     }
   };
-
-  const isRegisterButtonDisabled = !isAvailable || 
-    !validateDomainName(newDomain) || 
-    creatingDomain;
-
+  const isRegisterButtonDisabled = !isAvailable || !validateDomainName(newDomain) || creatingDomain;
   useEffect(() => {
     const domainParam = getSearchParam();
     if (domainParam) {
@@ -141,36 +126,18 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
       }, 100);
     }
   }, []);
-
-  return (
-    <div className="mb-6">
-      <h3 className="text-lg font-semibold mb-4">Register New Domain</h3>
+  return <div className="mb-6">
       
-      <RegistrationTabs
-        registrationType={registrationType}
-        setRegistrationType={setRegistrationType}
-      />
+      
+      <RegistrationTabs registrationType={registrationType} setRegistrationType={setRegistrationType} />
       
       <div className="w-full md:w-1/2 mx-auto">
-        <DomainAvailabilityChecker
-          newDomain={newDomain}
-          setNewDomain={setNewDomain}
-          isAvailable={isAvailable}
-          setIsAvailable={setIsAvailable}
-          domainSuffix={domainSuffix}
-          validateDomainName={validateDomainName}
-        />
+        <DomainAvailabilityChecker newDomain={newDomain} setNewDomain={setNewDomain} isAvailable={isAvailable} setIsAvailable={setIsAvailable} domainSuffix={domainSuffix} validateDomainName={validateDomainName} />
       </div>
       
       <div className="mt-4 flex justify-center">
-        <RegisterDomainButton 
-          onClick={registerDomain}
-          disabled={isRegisterButtonDisabled}
-          isLoading={creatingDomain}
-        />
+        <RegisterDomainButton onClick={registerDomain} disabled={isRegisterButtonDisabled} isLoading={creatingDomain} />
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default DomainRegistrationForm;
