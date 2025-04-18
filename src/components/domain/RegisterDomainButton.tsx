@@ -32,7 +32,7 @@ const RegisterDomainButton: React.FC<RegisterDomainButtonProps> = ({
     <Button 
       onClick={handleClick} 
       disabled={disabled}
-      className="w-full md:w-auto bg-gradient-to-r from-emerald-500 to-green-400 text-gray-900 font-semibold hover:brightness-110 shadow-[0_4px_15px_rgba(0,0,0,0.3)] hover:shadow-[0_4px_20px_rgba(0,255,165,0.4)]"
+      className="w-1/2 md:w-1/2 bg-gradient-to-r from-emerald-500 to-green-400 text-gray-900 font-semibold hover:brightness-110 shadow-[0_4px_15px_rgba(0,0,0,0.3)] hover:shadow-[0_4px_20px_rgba(0,255,165,0.4)]"
     >
       {isLoading ? (
         <>
