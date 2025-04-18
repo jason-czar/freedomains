@@ -48,31 +48,12 @@ serve(async (req) => {
       customerId = newCustomer.id;
     }
 
-    let priceData;
+    // Use the predefined price IDs based on the service
+    let priceId;
     if (service === "email") {
-      priceData = {
-        currency: "usd",
-        product_data: {
-          name: "Email Service for " + domainName,
-          description: "Professional email hosting with 5 mailboxes",
-        },
-        unit_amount: 499, // $4.99/month
-        recurring: {
-          interval: "month",
-        },
-      };
+      priceId = "price_H5ggYwtDq4fbrJ"; // Email service price ID
     } else if (service === "domain") {
-      priceData = {
-        currency: "usd",
-        product_data: {
-          name: "Domain Renewal for " + domainName,
-          description: "Annual domain registration renewal",
-        },
-        unit_amount: 1999, // $19.99/year
-        recurring: {
-          interval: "year",
-        },
-      };
+      priceId = "price_H5ggYwtDq4fbrJ"; // Domain renewal price ID
     } else {
       throw new Error("Invalid service specified");
     }
@@ -81,7 +62,7 @@ serve(async (req) => {
       customer: customerId,
       line_items: [
         {
-          price_data: priceData,
+          price: priceId,
           quantity: 1,
         },
       ],
