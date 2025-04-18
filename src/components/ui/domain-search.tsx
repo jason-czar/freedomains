@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,9 @@ const DomainSearch = ({
       if (onSearch) {
         onSearch(domain);
       }
+      
+      // After checking availability, navigate to register-domain page
+      navigate(`/register-domain${setSearchParam(domain)}`);
     }, 1000);
   };
 
@@ -71,3 +75,4 @@ const DomainSearch = ({
 };
 
 export default DomainSearch;
+
