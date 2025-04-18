@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, type PaymentMethod, type Subscription } from "@/integrations/supabase/client";
 import DomainAvailabilityChecker from "./DomainAvailabilityChecker";
 import RegistrationTabs from "./RegistrationTabs";
 import RegisterDomainButton from "./RegisterDomainButton";

@@ -38,15 +38,15 @@ const DomainList: React.FC<DomainListProps> = ({
       
       if (cfError) {
         console.error("Error deleting Cloudflare DNS record:", cfError);
-        // Continue with database deletion even if Cloudflare deletion fails
       }
       
-      // Check if email service is active and cancel it
-      if (domains.find(d => d.id === domainId)?.settings?.email_enabled) {
+      // Check if email service is active and cancel subscription if needed
+      const domain = domains.find(d => d.id === domainId);
+      if (domain?.settings?.email_enabled) {
         const { error: subscriptionError } = await supabase
-          .from("subscriptions")
-          .update({ status: "cancelled" })
-          .eq("domain", `${subdomain}.${domainSuffix}`);
+          .from('subscriptions')
+          .update({ status: 'cancelled' })
+          .eq('domain', `${subdomain}.${domainSuffix}`);
           
         if (subscriptionError) {
           console.error("Error cancelling email subscription:", subscriptionError);
@@ -55,9 +55,9 @@ const DomainList: React.FC<DomainListProps> = ({
       
       // Delete from database
       const { error: dbError } = await supabase
-        .from("domains")
+        .from('domains')
         .delete()
-        .eq("id", domainId);
+        .eq('id', domainId);
       
       if (dbError) throw dbError;
       

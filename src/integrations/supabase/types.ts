@@ -42,6 +42,36 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_methods: {
+        Row: {
+          brand: string
+          created_at: string
+          expiry_month: string
+          expiry_year: string
+          id: string
+          last_four: string
+          user_id: string
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          expiry_month: string
+          expiry_year: string
+          id?: string
+          last_four: string
+          user_id: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          expiry_month?: string
+          expiry_year?: string
+          id?: string
+          last_four?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -69,6 +99,42 @@ export type Database = {
           updated_at?: string
           username?: string | null
           website?: string | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          amount: number
+          created_at: string
+          domain: string
+          id: string
+          interval: string
+          next_billing_date: string
+          service: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          domain: string
+          id?: string
+          interval: string
+          next_billing_date: string
+          service: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          domain?: string
+          id?: string
+          interval?: string
+          next_billing_date?: string
+          service?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }

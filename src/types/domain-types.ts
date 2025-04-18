@@ -1,4 +1,3 @@
-
 export interface DomainSettings {
   domain_suffix?: string;
   nameservers?: string[];
@@ -9,6 +8,10 @@ export interface DomainSettings {
   delegated?: boolean;
   dns_active?: boolean;
   dns_records?: any[];
+  email_enabled?: boolean;
+  free_first_year?: boolean;
+  renewal_price?: number;
+  vercel_cname_added?: boolean;
 }
 
 export interface Domain {
