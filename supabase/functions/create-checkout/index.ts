@@ -48,12 +48,12 @@ serve(async (req) => {
       customerId = newCustomer.id;
     }
 
-    // Use the predefined price IDs based on the service
+    // Use the correct price IDs based on the service
     let priceId;
     if (service === "email") {
-      priceId = "price_H5ggYwtDq4fbrJ"; // Email service price ID
+      priceId = "price_1RFMODPU1VJ4VCmuW8VmGlgO"; // Email service price ID
     } else if (service === "domain") {
-      priceId = "price_H5ggYwtDq4fbrJ"; // Domain renewal price ID
+      priceId = "price_1RFMT3PU1VJ4VCmu06duLLXu"; // Domain renewal price ID
     } else {
       throw new Error("Invalid service specified");
     }
