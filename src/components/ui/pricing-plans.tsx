@@ -1,11 +1,13 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const PricingPlans = () => {
+interface PricingPlansProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+const PricingPlans: React.FC<PricingPlansProps> = ({ className, ...props }) => {
   return (
-    <div className="clay-container py-16">
+    <div className={cn("clay-container py-16", className)} {...props}>
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold mb-4">Simple, Transparent Pricing</h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
