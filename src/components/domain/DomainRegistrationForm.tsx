@@ -126,7 +126,7 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
       }, 100);
     }
   }, []);
-  return <div className="mb-6">
+  return <div className="mb-6 py-[22px]">
       
       
       <RegistrationTabs registrationType={registrationType} setRegistrationType={setRegistrationType} />
