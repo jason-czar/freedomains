@@ -76,7 +76,11 @@ async function verifyDomainSetup(subdomain: string, domainSuffix: string, userId
       await supabase
         .from("domains")
         .update({
-          settings: supabase.sql`jsonb_set(settings, '{dns_verification_attempts}', to_jsonb(${attempt}))`,
+          settings: {
+            dns_verification_attempts: attempt,
+            dns_verification_in_progress: true,
+            dns_last_check_at: new Date().toISOString()
+          }
         })
         .eq("id", domainId);
 
