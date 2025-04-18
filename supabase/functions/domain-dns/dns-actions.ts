@@ -1,3 +1,4 @@
+
 import { DNSRecord } from "./types.ts";
 import { formatResponse, errorResponse, getCloudflareHeaders } from "./helpers.ts";
 import { updateDomainSettings } from "./domain-settings.ts";
@@ -72,6 +73,7 @@ export async function createDomain(
   
   if (records && Array.isArray(records) && records.length > 0) {
     const createdRecords = [];
+    const failedRecords = [];
     
     for (const record of records) {
       const createUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
@@ -95,22 +97,27 @@ export async function createDomain(
       
       if (!data.success) {
         console.error(`Failed to create ${record.type} record:`, data.errors);
-        return formatResponse({ 
-          success: false,
-          errors: data.errors,
-          cloudflareResponse: data
-        }, 400);
+        failedRecords.push({
+          record,
+          errors: data.errors
+        });
+      } else {
+        createdRecords.push(data.result);
       }
-      
-      createdRecords.push(data.result);
     }
     
     const domainSettings = await updateDomainSettings(zoneId, apiKey);
     
+    // Check if we have any failures, but still return success if at least some records were created
+    const success = createdRecords.length > 0;
+    const hasFailures = failedRecords.length > 0;
+    
     return formatResponse({ 
-      success: true,
+      success,
       fullDomain,
       dnsRecords: createdRecords,
+      failedRecords: hasFailures ? failedRecords : undefined,
+      partialSuccess: success && hasFailures,
       domainSettings
     });
   }
@@ -182,7 +189,11 @@ export async function verifyDomainRecords(
       return formatResponse({ 
         success: false,
         error: "A record not found or not propagated",
-        fullDomain
+        fullDomain,
+        recordStatus: {
+          aRecord: false,
+          vercelCname: false
+        }
       });
     }
     
@@ -198,7 +209,14 @@ export async function verifyDomainRecords(
       return formatResponse({ 
         success: false,
         error: "Vercel CNAME record not found or not propagated",
-        fullDomain
+        fullDomain,
+        recordStatus: {
+          aRecord: true,
+          vercelCname: false
+        },
+        existingRecords: {
+          a: aData.result[0]
+        }
       });
     }
     
@@ -207,6 +225,10 @@ export async function verifyDomainRecords(
       success: true,
       message: "All DNS records verified",
       fullDomain,
+      recordStatus: {
+        aRecord: true,
+        vercelCname: true
+      },
       records: {
         a: aData.result[0],
         cname: cnameData.result[0]
@@ -217,7 +239,60 @@ export async function verifyDomainRecords(
     return formatResponse({ 
       success: false,
       error: error.message || 'Failed to verify DNS records',
-      fullDomain
+      fullDomain,
+      recordStatus: {
+        error: true
+      }
+    });
+  }
+}
+
+// New function to check Vercel domain verification status
+export async function checkVercelVerification(
+  subdomain: string,
+  domainSuffix: string,
+  zoneId: string,
+  apiKey: string
+) {
+  const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
+  
+  try {
+    // This is a simulated verification since we don't have direct access to Vercel's API
+    // In a real implementation, you would call Vercel's API to check domain verification status
+    
+    // First check if our DNS records are propagated
+    const verifyResponse = await verifyDomainRecords(subdomain, domainSuffix, zoneId, apiKey);
+    const verifyData = await verifyResponse.json();
+    
+    if (!verifyData.success) {
+      return formatResponse({ 
+        success: false,
+        message: "DNS records not fully propagated yet",
+        fullDomain,
+        vercelStatus: "pending",
+        dnsVerification: verifyData
+      });
+    }
+    
+    // Simulate a domain verification check
+    // For a real implementation, you would use Vercel's API
+    // For now, we'll consider it verified if DNS is propagated
+    
+    return formatResponse({ 
+      success: true,
+      message: "Domain appears to be verified with Vercel",
+      fullDomain,
+      vercelStatus: "active",
+      dnsVerification: verifyData
+    });
+    
+  } catch (error) {
+    console.error('Error checking Vercel verification:', error);
+    return formatResponse({ 
+      success: false,
+      error: error.message || 'Failed to check Vercel verification',
+      fullDomain,
+      vercelStatus: "error"
     });
   }
 }

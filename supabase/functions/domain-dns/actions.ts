@@ -2,7 +2,9 @@
 import { updateDomainSettings } from "./domain-settings.ts";
 import { 
   checkDomain, 
-  createDomain 
+  createDomain,
+  verifyDomainRecords,
+  checkVercelVerification
 } from "./dns-actions.ts";
 import { 
   deleteDomain, 
@@ -21,5 +23,7 @@ export {
   addRecord,
   deleteRecord,
   updateRecord,
-  updateDomainSettings
+  updateDomainSettings,
+  verifyDomainRecords,
+  checkVercelVerification
 };

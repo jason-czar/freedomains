@@ -9,7 +9,9 @@ import {
   listRecords, 
   addRecord, 
   deleteRecord, 
-  updateRecord 
+  updateRecord,
+  verifyDomainRecords,
+  checkVercelVerification
 } from "./actions.ts";
 
 // Main server function
@@ -86,6 +88,12 @@ serve(async (req) => {
           return errorResponse('Missing record ID or record data');
         }
         return await updateRecord(record_id, record, CLOUDFLARE_ZONE_ID, CLOUDFLARE_API_KEY);
+        
+      case 'verify':
+        return await verifyDomainRecords(subdomain, domain, CLOUDFLARE_ZONE_ID, CLOUDFLARE_API_KEY);
+      
+      case 'check_vercel':
+        return await checkVercelVerification(subdomain, domain, CLOUDFLARE_ZONE_ID, CLOUDFLARE_API_KEY);
         
       default:
         return errorResponse('Invalid action');
