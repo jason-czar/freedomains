@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,7 +8,7 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
   const [creatingDomain, setCreatingDomain] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [newDomain, setNewDomain] = useState("");
-  const [domainSuffix] = useState("com.channel");
+  const [domainSuffix] = useState("free.com.channel");
   const [registrationType, setRegistrationType] = useState("standard");
   const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
   const [includeEmail, setIncludeEmail] = useState(false);
@@ -97,14 +96,12 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
     }
 
     if (!hasPaymentMethod) {
-      // If no payment method, redirect to Stripe checkout for domain registration
       redirectToStripeCheckout('domain');
       return;
     }
 
     setCreatingDomain(true);
     try {
-      // Create DNS records directly through Cloudflare
       const { data: cfData, error: cfError } = await supabase.functions.invoke("domain-dns", {
         body: {
           action: "create",
@@ -131,7 +128,6 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
         throw new Error("Failed to create DNS records: " + JSON.stringify(cfData.cloudflareResponse?.errors));
       }
 
-      // Handle email MX records if email option is selected
       if (includeEmail) {
         const { error: emailError } = await supabase.functions.invoke("domain-dns", {
           body: {
@@ -171,11 +167,9 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
         }
       }
 
-      // Determine expiration date (1 year from now)
       const expirationDate = new Date();
       expirationDate.setFullYear(expirationDate.getFullYear() + 1);
 
-      // Register in database
       const { error: dbError } = await supabase.from("domains").insert({
         user_id: user.id,
         subdomain: newDomain.trim(),
@@ -204,7 +198,6 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
       }
 
       if (includeEmail) {
-        // Redirect to Stripe checkout for email service
         redirectToStripeCheckout('email');
         return;
       }
@@ -224,7 +217,6 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
       setIncludeEmail(false);
       fetchDomains();
       
-      // Navigate to dashboard after successful registration
       navigate('/dashboard?tab=domains');
 
     } catch (error: any) {
