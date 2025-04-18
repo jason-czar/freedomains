@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
 interface DomainAvailabilityCheckerProps {
   newDomain: string;
   setNewDomain: (domain: string) => void;
@@ -12,6 +13,7 @@ interface DomainAvailabilityCheckerProps {
   domainSuffix: string;
   validateDomainName: (domain: string) => boolean;
 }
+
 const DomainAvailabilityChecker: React.FC<DomainAvailabilityCheckerProps> = ({
   newDomain,
   setNewDomain,
@@ -21,6 +23,7 @@ const DomainAvailabilityChecker: React.FC<DomainAvailabilityCheckerProps> = ({
   validateDomainName
 }) => {
   const [checkingAvailability, setCheckingAvailability] = useState(false);
+
   const checkDomainAvailability = async () => {
     if (!newDomain.trim()) {
       toast.error("Please enter a domain name");
@@ -29,7 +32,6 @@ const DomainAvailabilityChecker: React.FC<DomainAvailabilityCheckerProps> = ({
     setCheckingAvailability(true);
     setIsAvailable(null);
     try {
-      // First check local database
       const {
         data: existingDomain,
         error: dbError
@@ -42,7 +44,6 @@ const DomainAvailabilityChecker: React.FC<DomainAvailabilityCheckerProps> = ({
         return;
       }
 
-      // Then check with Cloudflare
       const {
         data,
         error
@@ -66,16 +67,17 @@ const DomainAvailabilityChecker: React.FC<DomainAvailabilityCheckerProps> = ({
       setCheckingAvailability(false);
     }
   };
+
   const handleNewDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase();
     setNewDomain(value);
 
-    // Reset availability status when input changes
     if (isAvailable !== null) {
       setIsAvailable(null);
     }
   };
-  return <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+
+  return <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
       <div className="col-span-2">
         
         <div className="flex items-center bg-[#1A1F2C]/80 rounded-full overflow-hidden border border-[#49D97E] shadow-[0_0_10px_rgba(15,160,206,0.1)]">
@@ -96,7 +98,7 @@ const DomainAvailabilityChecker: React.FC<DomainAvailabilityCheckerProps> = ({
             </p>}
         </div>
       </div>
-      <div>
+      <div className="flex items-start">
         <Button variant="outline" onClick={checkDomainAvailability} disabled={checkingAvailability || !validateDomainName(newDomain)} className="w-full">
           {checkingAvailability ? <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -106,4 +108,5 @@ const DomainAvailabilityChecker: React.FC<DomainAvailabilityCheckerProps> = ({
       </div>
     </div>;
 };
+
 export default DomainAvailabilityChecker;
