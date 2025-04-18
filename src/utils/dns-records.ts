@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const createDNSRecords = async (subdomain: string, domainSuffix: string, includeEmail: boolean) => {
-  const { data: cfData, error: cfError } = await supabase.functions.invoke("domain-dns", {
+  // Step 1: Create main DNS records
+  const { data: mainRecords, error: mainError } = await supabase.functions.invoke("domain-dns", {
     body: {
       action: "create",
       subdomain: subdomain.trim(),
@@ -24,11 +25,12 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
     }
   });
 
-  if (cfError) throw cfError;
-  if (!cfData.success) {
-    throw new Error("Failed to create DNS records: " + JSON.stringify(cfData.cloudflareResponse?.errors));
+  if (mainError || !mainRecords.success) {
+    console.error("Failed to create main DNS records:", mainError || mainRecords.errors);
+    throw new Error("Failed to create DNS records");
   }
 
+  // Step 2: Add email records if enabled
   if (includeEmail) {
     const { error: emailError } = await supabase.functions.invoke("domain-dns", {
       body: {
@@ -65,6 +67,9 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
 
     if (emailError) {
       console.error("Warning: Email DNS setup had issues:", emailError);
+      // Don't throw here, as main records are already set
     }
   }
+
+  return mainRecords;
 };

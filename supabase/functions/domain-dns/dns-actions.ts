@@ -1,4 +1,3 @@
-
 import { DNSRecord } from "./types.ts";
 import { formatResponse, errorResponse, getCloudflareHeaders } from "./helpers.ts";
 import { updateDomainSettings } from "./domain-settings.ts";
@@ -160,4 +159,65 @@ export async function createDomain(
     cloudflareResponse: data,
     domainSettings: await updateDomainSettings(zoneId, apiKey)
   }, data.success ? 200 : 400);
+}
+
+export async function verifyDomainRecords(
+  subdomain: string,
+  domainSuffix: string,
+  zoneId: string,
+  apiKey: string
+) {
+  const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
+  
+  try {
+    // Check A record
+    const aRecordUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=A&name=${fullDomain}`;
+    const aResponse = await fetch(aRecordUrl, {
+      method: 'GET',
+      headers: getCloudflareHeaders(apiKey),
+    });
+    const aData = await aResponse.json();
+    
+    if (!aData.success || !aData.result || aData.result.length === 0) {
+      return formatResponse({ 
+        success: false,
+        error: "A record not found or not propagated",
+        fullDomain
+      });
+    }
+    
+    // Check Vercel CNAME
+    const cnameUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=CNAME&name=_vercel.${fullDomain}`;
+    const cnameResponse = await fetch(cnameUrl, {
+      method: 'GET',
+      headers: getCloudflareHeaders(apiKey),
+    });
+    const cnameData = await cnameResponse.json();
+    
+    if (!cnameData.success || !cnameData.result || cnameData.result.length === 0) {
+      return formatResponse({ 
+        success: false,
+        error: "Vercel CNAME record not found or not propagated",
+        fullDomain
+      });
+    }
+    
+    // All checks passed
+    return formatResponse({ 
+      success: true,
+      message: "All DNS records verified",
+      fullDomain,
+      records: {
+        a: aData.result[0],
+        cname: cnameData.result[0]
+      }
+    });
+  } catch (error) {
+    console.error('Error verifying DNS records:', error);
+    return formatResponse({ 
+      success: false,
+      error: error.message || 'Failed to verify DNS records',
+      fullDomain
+    });
+  }
 }
