@@ -1,8 +1,11 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { validateDomainName } from "@/utils/domain-validation";
+import { checkPaymentMethod, redirectToStripeCheckout } from "@/utils/payment";
+import { registerDomain } from "@/services/domain-registration";
 
 export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
   const [creatingDomain, setCreatingDomain] = useState(false);
@@ -17,68 +20,13 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const validateDomainName = (domain: string) => {
-    const isValid = /^[a-z0-9-]{3,63}$/.test(domain) && !domain.startsWith('-') && !domain.endsWith('-');
-    return isValid;
-  };
-
-  const checkPaymentMethod = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from("payment_methods")
-        .select("id")
-        .eq("user_id", user.id)
-        .limit(1);
-      
-      if (error) throw error;
-      setHasPaymentMethod(data && data.length > 0);
-    } catch (error) {
-      console.error("Error checking payment method:", error);
-    }
-  };
-
-  const redirectToStripeCheckout = async (service: 'domain' | 'email') => {
-    if (!user) {
-      toast.error("You must be logged in to make a purchase");
-      navigate("/login");
-      return;
-    }
-
-    try {
-      console.log(`Creating checkout for ${service} service...`);
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          service,
-          domainName: `${newDomain}.${domainSuffix}`
-        }
-      });
-
-      if (error) {
-        console.error("Error creating checkout:", error);
-        throw error;
-      }
-
-      if (!data?.url) {
-        throw new Error("No checkout URL returned");
-      }
-
-      console.log("Redirecting to checkout:", data.url);
-      window.location.href = data.url;
-    } catch (error: any) {
-      console.error("Error during checkout:", error);
-      toast.error(`Checkout error: ${error.message}`);
-    }
-  };
-
   const handlePaymentSuccess = () => {
     setHasPaymentMethod(true);
     setShowPaymentForm(false);
-    registerDomain();
+    handleDomainRegistration();
   };
 
-  const registerDomain = async () => {
+  const handleDomainRegistration = async () => {
     if (!user) {
       toast.error("You must be logged in to register a domain");
       navigate("/login");
@@ -96,109 +44,22 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
     }
 
     if (!hasPaymentMethod) {
-      redirectToStripeCheckout('domain');
+      const checkoutUrl = await redirectToStripeCheckout('domain', user.id, newDomain, domainSuffix);
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      }
       return;
     }
 
     setCreatingDomain(true);
     try {
-      const { data: cfData, error: cfError } = await supabase.functions.invoke("domain-dns", {
-        body: {
-          action: "create",
-          subdomain: newDomain.trim(),
-          domain: domainSuffix,
-          records: [{
-            type: "A",
-            name: newDomain.trim(),
-            content: "76.76.21.21",
-            ttl: 1,
-            proxied: true
-          }, {
-            type: "CNAME",
-            name: `_vercel.${newDomain.trim()}`,
-            content: "cname.vercel-dns.com",
-            ttl: 1,
-            proxied: false
-          }]
-        }
-      });
-
-      if (cfError) throw cfError;
-      if (!cfData.success) {
-        throw new Error("Failed to create DNS records: " + JSON.stringify(cfData.cloudflareResponse?.errors));
-      }
+      await registerDomain(user.id, newDomain, domainSuffix, includeEmail);
 
       if (includeEmail) {
-        const { error: emailError } = await supabase.functions.invoke("domain-dns", {
-          body: {
-            action: "create",
-            subdomain: newDomain.trim(),
-            domain: domainSuffix,
-            records: [
-              {
-                type: "MX",
-                name: newDomain.trim(),
-                content: "mx.zoho.com",
-                priority: 10,
-                ttl: 1,
-                proxied: false
-              },
-              {
-                type: "MX",
-                name: newDomain.trim(),
-                content: "mx2.zoho.com",
-                priority: 20,
-                ttl: 1,
-                proxied: false
-              },
-              {
-                type: "TXT",
-                name: newDomain.trim(),
-                content: "v=spf1 include:zoho.com ~all",
-                ttl: 1,
-                proxied: false
-              }
-            ]
-          }
-        });
-
-        if (emailError) {
-          console.error("Warning: Email DNS setup had issues:", emailError);
+        const checkoutUrl = await redirectToStripeCheckout('email', user.id, newDomain, domainSuffix);
+        if (checkoutUrl) {
+          window.location.href = checkoutUrl;
         }
-      }
-
-      const expirationDate = new Date();
-      expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-
-      const { error: dbError } = await supabase.from("domains").insert({
-        user_id: user.id,
-        subdomain: newDomain.trim(),
-        is_active: true,
-        expires_at: expirationDate.toISOString(),
-        settings: {
-          domain_suffix: domainSuffix,
-          delegation_type: "standard",
-          dns_active: true,
-          vercel_cname_added: true,
-          email_enabled: includeEmail,
-          free_first_year: true,
-          renewal_price: 19.99
-        }
-      });
-
-      if (dbError) {
-        await supabase.functions.invoke("domain-dns", {
-          body: {
-            action: "delete",
-            subdomain: newDomain.trim(),
-            domain: domainSuffix
-          }
-        });
-        throw dbError;
-      }
-
-      if (includeEmail) {
-        redirectToStripeCheckout('email');
         return;
       }
 
@@ -218,12 +79,18 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
       fetchDomains();
       
       navigate('/dashboard?tab=domains');
-
     } catch (error: any) {
       console.error("Error registering domain:", error.message);
       toast.error("Failed to register domain: " + error.message);
     } finally {
       setCreatingDomain(false);
+    }
+  };
+
+  const initializePaymentCheck = async () => {
+    if (user) {
+      const hasMethod = await checkPaymentMethod(user.id);
+      setHasPaymentMethod(hasMethod);
     }
   };
 
@@ -242,8 +109,8 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
     showPaymentForm,
     setShowPaymentForm,
     validateDomainName,
-    checkPaymentMethod,
+    checkPaymentMethod: initializePaymentCheck,
     handlePaymentSuccess,
-    registerDomain
+    registerDomain: handleDomainRegistration
   };
 };
