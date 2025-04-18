@@ -40,6 +40,39 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
     }
   };
 
+  const redirectToStripeCheckout = async (service: 'domain' | 'email') => {
+    if (!user) {
+      toast.error("You must be logged in to make a purchase");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      console.log(`Creating checkout for ${service} service...`);
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: {
+          service,
+          domainName: `${newDomain}.${domainSuffix}`
+        }
+      });
+
+      if (error) {
+        console.error("Error creating checkout:", error);
+        throw error;
+      }
+
+      if (!data?.url) {
+        throw new Error("No checkout URL returned");
+      }
+
+      console.log("Redirecting to checkout:", data.url);
+      window.location.href = data.url;
+    } catch (error: any) {
+      console.error("Error during checkout:", error);
+      toast.error(`Checkout error: ${error.message}`);
+    }
+  };
+
   const handlePaymentSuccess = () => {
     setHasPaymentMethod(true);
     setShowPaymentForm(false);
@@ -64,7 +97,8 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
     }
 
     if (!hasPaymentMethod) {
-      setShowPaymentForm(true);
+      // If no payment method, redirect to Stripe checkout for domain registration
+      redirectToStripeCheckout('domain');
       return;
     }
 
@@ -170,21 +204,9 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
       }
 
       if (includeEmail) {
-        const { error: subscriptionError } = await supabase.from("subscriptions").insert({
-          user_id: user.id,
-          domain: `${newDomain.trim()}.${domainSuffix}`,
-          service: "email",
-          status: "active",
-          amount: 4.99,
-          interval: "month",
-          next_billing_date: new Date().toISOString(),
-          created_at: new Date().toISOString()
-        });
-
-        if (subscriptionError) {
-          console.error("Error creating email subscription:", subscriptionError);
-          toast.error("Domain created but there was an issue setting up email billing.");
-        }
+        // Redirect to Stripe checkout for email service
+        redirectToStripeCheckout('email');
+        return;
       }
 
       toast.success("Domain registered successfully!");
@@ -201,6 +223,9 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
       setIsAvailable(null);
       setIncludeEmail(false);
       fetchDomains();
+      
+      // Navigate to dashboard after successful registration
+      navigate('/dashboard?tab=domains');
 
     } catch (error: any) {
       console.error("Error registering domain:", error.message);

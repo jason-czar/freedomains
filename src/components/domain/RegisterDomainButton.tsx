@@ -2,7 +2,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, PlusCircle, CreditCard } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 interface RegisterDomainButtonProps {
   onClick: () => Promise<void>;
@@ -17,13 +16,10 @@ const RegisterDomainButton: React.FC<RegisterDomainButtonProps> = ({
   isLoading,
   hasPaymentMethod = true
 }) => {
-  const navigate = useNavigate();
-
-  const handleClick = async () => {
+  const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent any default form submission
     try {
       await onClick();
-      // Navigate to dashboard with domains tab active
-      navigate('/dashboard?tab=domains');
     } catch (error) {
       // If onClick throws an error, it will be handled by the parent component
       console.error("Error during domain registration:", error);
@@ -43,6 +39,7 @@ const RegisterDomainButton: React.FC<RegisterDomainButtonProps> = ({
       onClick={handleClick} 
       disabled={disabled}
       className="w-1/2 md:w-1/2 bg-gradient-to-r from-emerald-500 to-green-400 text-gray-900 font-semibold hover:brightness-110 shadow-[0_4px_15px_rgba(0,0,0,0.3)] hover:shadow-[0_4px_20px_rgba(0,255,165,0.4)]"
+      type="button" // Make sure it's type button to prevent form submission
     >
       {buttonIcon}
       {buttonText}
