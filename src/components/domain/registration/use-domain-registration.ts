@@ -11,7 +11,7 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
   const [creatingDomain, setCreatingDomain] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [newDomain, setNewDomain] = useState("");
-  const [domainSuffix] = useState("free.com.channel");
+  const [domainSuffix] = useState("com.channel");  // Updated to com.channel
   const [registrationType, setRegistrationType] = useState("standard");
   const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
   const [includeEmail, setIncludeEmail] = useState(false);
