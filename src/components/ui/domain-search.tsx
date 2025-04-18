@@ -58,6 +58,8 @@ const DomainSearch = ({
       <Button type="submit" className="w-full py-6 bg-gradient-to-r from-emerald-500 to-green-400 text-gray-900 font-semibold hover:brightness-110 shadow-[0_4px_15px_rgba(0,0,0,0.3)] hover:shadow-[0_4px_20px_rgba(0,255,165,0.4)]" disabled={isSearching || !subdomain.trim()}>
         {isSearching ? "Checking..." : "Check Availability"}
       </Button>
+      
+      <p className="text-center text-gray-400 text-sm">Free for the first year, then $19.99/year</p>
     </form>
 
     {isAvailable !== null && !isSearching && <div className={`mt-6 p-4 rounded-xl text-center ${isAvailable ? 'bg-emerald-900/30 border border-emerald-500/20' : 'bg-rose-900/30 border border-rose-500/20'}`}>
@@ -69,10 +71,10 @@ const DomainSearch = ({
         >
           Register Now
         </Button>
+        <p className="mt-2 text-gray-400 text-sm">Free for the first year, then $19.99/year</p>
       </> : <div className="text-xl font-bold text-rose-400">Sorry, {subdomain}.com.channel is already taken.</div>}
     </div>}
   </div>;
 };
 
 export default DomainSearch;
-

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Globe, Server } from "lucide-react";
+import { Globe, Server, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Domain } from "@/types/domain-types";
 
@@ -35,6 +35,29 @@ const DomainRow: React.FC<DomainRowProps> = ({
     }
     
     return false;
+  };
+
+  const isEmailEnabled = () => {
+    return domain.settings?.email_enabled === true;
+  };
+
+  const getExpirationDate = () => {
+    if (!domain.expires_at) return "Never";
+    
+    const expirationDate = new Date(domain.expires_at);
+    const formattedDate = expirationDate.toLocaleDateString();
+    
+    // Check if it's within the free first year
+    const isFirstYear = domain.settings?.free_first_year === true;
+    const registrationDate = new Date(domain.created_at);
+    const oneYearLater = new Date(registrationDate);
+    oneYearLater.setFullYear(registrationDate.getFullYear() + 1);
+    
+    if (isFirstYear && expirationDate <= oneYearLater) {
+      return `${formattedDate} (Free)`;
+    }
+    
+    return `${formattedDate} ($19.99/yr)`;
   };
 
   return (
@@ -76,11 +99,28 @@ const DomainRow: React.FC<DomainRowProps> = ({
         </span>
       </td>
       <td className="py-4">{new Date(domain.created_at).toLocaleDateString()}</td>
+      <td className="py-4">{getExpirationDate()}</td>
+      
+      {/* Email Status Column */}
       <td className="py-4">
-        {domain.expires_at 
-          ? new Date(domain.expires_at).toLocaleDateString() 
-          : "Never"}
+        {isEmailEnabled() ? (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+            <Mail className="h-3 w-3 mr-1" />
+            Active ($4.99/mo)
+          </span>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-indigo-600 hover:text-indigo-800"
+            onClick={() => navigate(`/email-addon/${domain.id}`)}
+          >
+            <Mail className="h-3 w-3 mr-1" />
+            Add Email
+          </Button>
+        )}
       </td>
+      
       <td className="py-4">
         <div className="flex gap-2">
           <Button

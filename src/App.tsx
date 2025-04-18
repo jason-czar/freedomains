@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +22,7 @@ import BillingPage from "./pages/BillingPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import LandingPageBuilderPage from "./pages/LandingPageBuilderPage";
 import RegisterDomainPage from "./pages/RegisterDomainPage";
+import EmailAddonPage from "./pages/EmailAddonPage";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +75,11 @@ const App = () => (
             <Route path="/analytics" element={
               <ProtectedRoute>
                 <AnalyticsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/email-addon/:domainId" element={
+              <ProtectedRoute>
+                <EmailAddonPage />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Domain } from "@/types/domain-types";
@@ -41,6 +41,18 @@ const DomainList: React.FC<DomainListProps> = ({
         // Continue with database deletion even if Cloudflare deletion fails
       }
       
+      // Check if email service is active and cancel it
+      if (domains.find(d => d.id === domainId)?.settings?.email_enabled) {
+        const { error: subscriptionError } = await supabase
+          .from("subscriptions")
+          .update({ status: "cancelled" })
+          .eq("domain", `${subdomain}.${domainSuffix}`);
+          
+        if (subscriptionError) {
+          console.error("Error cancelling email subscription:", subscriptionError);
+        }
+      }
+      
       // Delete from database
       const { error: dbError } = await supabase
         .from("domains")
@@ -70,12 +82,13 @@ const DomainList: React.FC<DomainListProps> = ({
             <div>
               <p className="text-gray-500">You don't have any domains registered yet.</p>
               <p className="text-gray-500 mt-1">Register your first domain above!</p>
+              <p className="text-gray-400 text-sm mt-2">Free for the first year, then $19.99/year</p>
             </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <DomainTableHeader />
+              <DomainTableHeader showEmailStatus={true} />
               <tbody>
                 {domains.map((domain) => (
                   <DomainRow
