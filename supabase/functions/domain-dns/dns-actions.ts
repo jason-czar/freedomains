@@ -1,4 +1,3 @@
-
 import { DNSRecord } from "./types.ts";
 import { formatResponse, errorResponse, getCloudflareHeaders } from "./helpers.ts";
 import { updateDomainSettings } from "./domain-settings.ts";
@@ -37,6 +36,7 @@ export async function createDomain(
   records?: DNSRecord[]
 ) {
   const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
+  console.log(`Creating domain: ${fullDomain} in Cloudflare zone ${zoneId}`);
   
   if (nameservers && Array.isArray(nameservers) && nameservers.length > 0) {
     const nsRecords = [];
@@ -72,37 +72,50 @@ export async function createDomain(
   }
   
   if (records && Array.isArray(records) && records.length > 0) {
+    console.log(`Creating ${records.length} DNS records for ${fullDomain}`);
     const createdRecords = [];
     const failedRecords = [];
     
     for (const record of records) {
+      const recordName = record.name.includes('.') ? record.name : `${record.name}.${domainSuffix}`;
+      console.log(`Creating ${record.type} record: ${recordName} -> ${record.content}`);
+      
       const createUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
       
-      const response = await fetch(createUrl, {
-        method: 'POST',
-        headers: getCloudflareHeaders(apiKey),
-        body: JSON.stringify({
-          type: record.type,
-          name: record.name.includes('.') ? record.name : `${record.name}.${domainSuffix}`,
-          content: record.content,
-          ttl: record.ttl || 1,
-          priority: record.priority,
-          proxied: record.proxied !== undefined ? record.proxied : (
-            ['A', 'AAAA', 'CNAME'].includes(record.type) ? true : false
-          )
-        }),
-      });
+      try {
+        const response = await fetch(createUrl, {
+          method: 'POST',
+          headers: getCloudflareHeaders(apiKey),
+          body: JSON.stringify({
+            type: record.type,
+            name: recordName,
+            content: record.content,
+            ttl: record.ttl || 1,
+            priority: record.priority,
+            proxied: record.proxied !== undefined ? record.proxied : (
+              ['A', 'AAAA', 'CNAME'].includes(record.type) ? true : false
+            )
+          }),
+        });
 
-      const data = await response.json();
-      
-      if (!data.success) {
-        console.error(`Failed to create ${record.type} record:`, data.errors);
+        const data = await response.json();
+        
+        if (!data.success) {
+          console.error(`Failed to create ${record.type} record for ${recordName}:`, data.errors);
+          failedRecords.push({
+            record,
+            errors: data.errors
+          });
+        } else {
+          console.log(`Successfully created ${record.type} record for ${recordName}`);
+          createdRecords.push(data.result);
+        }
+      } catch (error) {
+        console.error(`Exception creating ${record.type} record for ${recordName}:`, error);
         failedRecords.push({
           record,
-          errors: data.errors
+          errors: [{ message: error.message || "Network error" }]
         });
-      } else {
-        createdRecords.push(data.result);
       }
     }
     
@@ -118,27 +131,44 @@ export async function createDomain(
       dnsRecords: createdRecords,
       failedRecords: hasFailures ? failedRecords : undefined,
       partialSuccess: success && hasFailures,
-      domainSettings
+      domainSettings,
+      message: success 
+        ? (hasFailures ? `Created ${createdRecords.length} records, ${failedRecords.length} failed` : "All records created successfully") 
+        : "Failed to create any DNS records"
     });
   }
   
+  console.log(`Creating default A record for ${fullDomain} -> 76.76.21.21`);
   const createUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
   
-  const response = await fetch(createUrl, {
-    method: 'POST',
-    headers: getCloudflareHeaders(apiKey),
-    body: JSON.stringify({
-      type: 'A',
-      name: fullDomain,
-      content: '76.76.21.21',
-      ttl: 1,
-      proxied: true
-    }),
-  });
+  try {
+    const response = await fetch(createUrl, {
+      method: 'POST',
+      headers: getCloudflareHeaders(apiKey),
+      body: JSON.stringify({
+        type: 'A',
+        name: fullDomain,
+        content: '76.76.21.21',
+        ttl: 1,
+        proxied: true
+      }),
+    });
 
-  const data = await response.json();
-  
-  if (data.success) {
+    const data = await response.json();
+    
+    if (!data.success) {
+      console.error(`Failed to create A record for ${fullDomain}:`, data.errors);
+      return formatResponse({ 
+        success: false,
+        fullDomain,
+        error: data.errors,
+        message: "Failed to create A record in Cloudflare"
+      }, 400);
+    }
+    
+    console.log(`A record created successfully for ${fullDomain}, adding Vercel CNAME`);
+    
+    // Create Vercel verification CNAME
     const vercelCnameUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
     
     const vercelCnameResponse = await fetch(vercelCnameUrl, {
@@ -154,18 +184,40 @@ export async function createDomain(
     });
     
     const vercelCnameData = await vercelCnameResponse.json();
-    console.log("Vercel verification CNAME added:", vercelCnameData);
     
+    if (!vercelCnameData.success) {
+      console.error(`Failed to create Vercel CNAME for ${fullDomain}:`, vercelCnameData.errors);
+      return formatResponse({ 
+        success: true, // Still return success since A record was created
+        fullDomain,
+        dnsRecord: data.result,
+        warning: "Vercel verification CNAME could not be created",
+        vercelError: vercelCnameData.errors,
+        domainSettings: await updateDomainSettings(zoneId, apiKey)
+      });
+    }
+    
+    console.log(`Vercel CNAME created successfully for _vercel.${fullDomain}`);
     const domainSettings = await updateDomainSettings(zoneId, apiKey);
+    
+    return formatResponse({ 
+      success: true,
+      fullDomain,
+      dnsRecord: data.result,
+      vercelCname: vercelCnameData.result,
+      message: "DNS records created successfully",
+      domainSettings
+    });
+    
+  } catch (error) {
+    console.error(`Exception creating DNS records for ${fullDomain}:`, error);
+    return formatResponse({ 
+      success: false,
+      fullDomain,
+      error: error.message || "Network error",
+      message: "Exception occurred calling Cloudflare API"
+    }, 500);
   }
-  
-  return formatResponse({ 
-    success: data.success,
-    fullDomain,
-    dnsRecord: data.result,
-    cloudflareResponse: data,
-    domainSettings: await updateDomainSettings(zoneId, apiKey)
-  }, data.success ? 200 : 400);
 }
 
 export async function verifyDomainRecords(
@@ -247,7 +299,6 @@ export async function verifyDomainRecords(
   }
 }
 
-// New function to check Vercel domain verification status
 export async function checkVercelVerification(
   subdomain: string,
   domainSuffix: string,

@@ -24,8 +24,14 @@ serve(async (req) => {
   const CLOUDFLARE_API_KEY = Deno.env.get('CLOUDFLARE_API_KEY');
   const CLOUDFLARE_ZONE_ID = Deno.env.get('CLOUDFLARE_ZONE_ID');
 
+  console.log("Edge function called with env variables present:", {
+    hasApiKey: !!CLOUDFLARE_API_KEY,
+    hasZoneId: !!CLOUDFLARE_ZONE_ID
+  });
+
   if (!CLOUDFLARE_API_KEY || !CLOUDFLARE_ZONE_ID) {
-    return errorResponse('Missing Cloudflare credentials', 500);
+    console.error("Missing Cloudflare credentials");
+    return errorResponse('Missing Cloudflare credentials. Check edge function secrets.', 500);
   }
 
   try {
@@ -40,16 +46,25 @@ serve(async (req) => {
       record
     } = requestBody;
     
+    console.log(`Processing domain-dns action: ${action}`, {
+      subdomain,
+      domain,
+      hasRecords: records ? records.length : 0,
+      hasNameservers: nameservers ? nameservers.length : 0
+    });
+    
     if (!action) {
-      return errorResponse('Missing required parameters');
+      return errorResponse('Missing required action parameter');
     }
 
     // Process based on action type
     switch (action) {
       case 'check':
+        console.log(`Checking domain availability: ${subdomain}.${domain}`);
         return await checkDomain(subdomain, domain, CLOUDFLARE_ZONE_ID, CLOUDFLARE_API_KEY);
         
       case 'create':
+        console.log(`Creating domain: ${subdomain}.${domain}`);
         return await createDomain(
           subdomain, 
           domain, 
@@ -96,11 +111,11 @@ serve(async (req) => {
         return await checkVercelVerification(subdomain, domain, CLOUDFLARE_ZONE_ID, CLOUDFLARE_API_KEY);
         
       default:
-        return errorResponse('Invalid action');
+        return errorResponse(`Invalid action: ${action}`);
     }
 
   } catch (error) {
-    console.error('Error processing request:', error);
-    return errorResponse(error.message, 500);
+    console.error('Error processing domain-dns request:', error);
+    return errorResponse(`Error processing request: ${error.message}`, 500);
   }
 });
