@@ -9,6 +9,8 @@ export async function verifyDomainSetup(subdomain: string, domainSuffix: string,
 
   const checkStatus = async () => {
     try {
+      console.log(`[Domain Verification] Attempt ${attempt + 1}/${maxRetries} for ${subdomain}.${domainSuffix}`);
+      
       // Update verification in progress status
       await supabase
         .from("domains")
@@ -22,11 +24,15 @@ export async function verifyDomainSetup(subdomain: string, domainSuffix: string,
         .eq("id", domainId);
 
       // Check DNS propagation
+      console.log(`[Domain Verification] Checking DNS status...`);
       const dnsCheck = await checkDNSStatus(subdomain, domainSuffix);
+      console.log(`[Domain Verification] DNS check result:`, dnsCheck);
       
       if (dnsCheck.success) {
         // DNS is propagated, now check Vercel verification
+        console.log(`[Domain Verification] DNS check successful, checking Vercel verification...`);
         const vercelCheck = await checkVercelStatus(subdomain, domainSuffix);
+        console.log(`[Domain Verification] Vercel check result:`, vercelCheck);
         
         // Update domain status based on verification results
         await supabase
@@ -43,11 +49,12 @@ export async function verifyDomainSetup(subdomain: string, domainSuffix: string,
           })
           .eq("id", domainId);
 
+        console.log(`[Domain Verification] Verification completed successfully`);
         return true;
       }
 
       if (attempt >= maxRetries) {
-        console.error("Domain verification failed after maximum retries");
+        console.error(`[Domain Verification] Failed after maximum retries for ${subdomain}.${domainSuffix}`);
         
         await supabase
           .from("domains")
@@ -80,10 +87,11 @@ export async function verifyDomainSetup(subdomain: string, domainSuffix: string,
         })
         .eq("id", domainId);
         
+      console.log(`[Domain Verification] Waiting ${retryDelay/1000}s before next attempt...`);
       await new Promise(resolve => setTimeout(resolve, retryDelay));
       return await checkStatus();
     } catch (error) {
-      console.error("Error verifying domain setup:", error);
+      console.error(`[Domain Verification] Error:`, error);
       
       await supabase
         .from("domains")
@@ -102,7 +110,7 @@ export async function verifyDomainSetup(subdomain: string, domainSuffix: string,
 
   // Start the verification process in the background
   checkStatus().catch(error => {
-    console.error("Background verification process error:", error);
+    console.error(`[Domain Verification] Background process error:`, error);
   });
 }
 

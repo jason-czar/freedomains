@@ -37,6 +37,7 @@ export async function createDomain(
 ) {
   const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
   console.log(`Creating domain: ${fullDomain} in Cloudflare zone ${zoneId}`);
+  console.log(`Using ${records ? records.length : 0} specific records, ${nameservers ? nameservers.length : 0} nameservers`);
   
   if (nameservers && Array.isArray(nameservers) && nameservers.length > 0) {
     const nsRecords = [];
@@ -101,20 +102,25 @@ export async function createDomain(
           );
         }
         
+        const requestBody = {
+          type: record.type,
+          name: recordName,
+          content: record.content,
+          ttl: record.ttl || 1,
+          priority: record.priority,
+          proxied: isProxied
+        };
+        
+        console.log(`Sending request to Cloudflare for ${record.type} record:`, JSON.stringify(requestBody));
+        
         const response = await fetch(createUrl, {
           method: 'POST',
           headers: getCloudflareHeaders(apiKey),
-          body: JSON.stringify({
-            type: record.type,
-            name: recordName,
-            content: record.content,
-            ttl: record.ttl || 1,
-            priority: record.priority,
-            proxied: isProxied
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         const data = await response.json();
+        console.log(`Cloudflare response for ${record.type} record:`, JSON.stringify(data));
         
         if (!data.success) {
           console.error(`Failed to create ${record.type} record for ${recordName}:`, data.errors);

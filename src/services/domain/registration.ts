@@ -11,8 +11,13 @@ export const registerDomain = async (
   includeEmail: boolean
 ) => {
   try {
+    console.log(`[Domain Registration] Starting registration for ${subdomain}.${domainSuffix}`);
+    
     // Step 1: Create DNS records
+    console.log(`[Domain Registration] Creating DNS records...`);
     const dnsResponse = await createDNSRecords(subdomain, domainSuffix, includeEmail);
+    
+    console.log(`[Domain Registration] DNS creation response:`, dnsResponse);
     
     if (!dnsResponse.success) {
       throw new Error("Failed to create DNS records: " + (dnsResponse.error || "Unknown error"));
@@ -22,6 +27,7 @@ export const registerDomain = async (
     expirationDate.setFullYear(expirationDate.getFullYear() + 1);
 
     // Step 2: Create domain in database with initial pending status
+    console.log(`[Domain Registration] Creating domain record in database...`);
     const { data: domainData, error: dbError } = await supabase.from("domains").insert({
       user_id: userId,
       subdomain: subdomain.trim(),
@@ -42,7 +48,9 @@ export const registerDomain = async (
     }).select("id").single();
 
     if (dbError) {
+      console.error(`[Domain Registration] Database error:`, dbError);
       // Rollback DNS records if database insert fails
+      console.log(`[Domain Registration] Rolling back DNS records...`);
       await supabase.functions.invoke("domain-dns", {
         body: {
           action: "delete",
@@ -55,12 +63,14 @@ export const registerDomain = async (
 
     // Step 3: Start DNS verification process with improved tracking
     if (domainData) {
+      console.log(`[Domain Registration] Starting DNS verification for domain ID: ${domainData.id}`);
       await verifyDomainSetup(subdomain, domainSuffix, userId, domainData.id);
     }
 
+    console.log(`[Domain Registration] Registration completed successfully`);
     return true;
   } catch (error: any) {
-    console.error("Error registering domain:", error.message);
+    console.error("Error registering domain:", error.message, error.stack);
     throw error;
   }
 };

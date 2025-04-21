@@ -37,7 +37,15 @@ serve(async (req) => {
   }
 
   try {
-    const requestBody: DomainRequest = await req.json();
+    let requestBody;
+    
+    try {
+      requestBody = await req.json();
+    } catch (jsonError) {
+      console.error("Error parsing request body:", jsonError);
+      return errorResponse('Invalid JSON in request body', 400);
+    }
+    
     const { 
       action, 
       subdomain = "", 
@@ -46,7 +54,7 @@ serve(async (req) => {
       records,
       record_id,
       record
-    } = requestBody;
+    } = requestBody as DomainRequest;
     
     console.log(`Processing domain-dns action: ${action}`, {
       subdomain,
@@ -68,7 +76,10 @@ serve(async (req) => {
         
       case 'create':
         console.log(`Creating domain: ${subdomain}.${domain}`);
-        return await createDomain(
+        if (records && Array.isArray(records)) {
+          console.log(`Creating with specific records:`, JSON.stringify(records));
+        }
+        const createResponse = await createDomain(
           subdomain, 
           domain, 
           CLOUDFLARE_ZONE_ID, 
@@ -76,6 +87,8 @@ serve(async (req) => {
           nameservers, 
           records
         );
+        console.log(`Create domain response:`, createResponse.status);
+        return createResponse;
         
       case 'delete':
         return await deleteDomain(subdomain, domain, CLOUDFLARE_ZONE_ID, CLOUDFLARE_API_KEY);

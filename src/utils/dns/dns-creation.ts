@@ -13,30 +13,36 @@ export const createDNSRecords = async (
   try {
     // Step 1: Create main DNS records
     console.log("[DNS Creation] Creating main DNS records (A record and CNAMEs)...");
+    
+    // Define the records we want to create
+    const mainRecordsToCreate = [{
+      type: "A",
+      name: subdomain.trim(),
+      content: "76.76.21.21",
+      ttl: 1,
+      proxied: true
+    }, {
+      type: "CNAME",
+      name: `_vercel.${subdomain.trim()}`,
+      content: "cname.vercel-dns.com",
+      ttl: 1,
+      proxied: false
+    }, {
+      type: "CNAME",
+      name: `www.${subdomain.trim()}`,
+      content: "cname.vercel-dns.com",
+      ttl: 1,
+      proxied: false
+    }];
+    
+    console.log("[DNS Creation] Records to create:", JSON.stringify(mainRecordsToCreate));
+    
     const { data: mainRecords, error: mainError } = await supabase.functions.invoke("domain-dns", {
       body: {
         action: "create",
         subdomain: subdomain.trim(),
         domain: domainSuffix,
-        records: [{
-          type: "A",
-          name: subdomain.trim(),
-          content: "76.76.21.21",
-          ttl: 1,
-          proxied: true
-        }, {
-          type: "CNAME",
-          name: `_vercel.${subdomain.trim()}`,
-          content: "cname.vercel-dns.com",
-          ttl: 1,
-          proxied: false
-        }, {
-          type: "CNAME",
-          name: `www.${subdomain.trim()}`,
-          content: "cname.vercel-dns.com",
-          ttl: 1,
-          proxied: false
-        }]
+        records: mainRecordsToCreate
       }
     });
 
@@ -45,9 +51,13 @@ export const createDNSRecords = async (
       throw new Error(`Edge function error: ${mainError.message}`);
     }
 
+    console.log("[DNS Creation] Edge function response:", mainRecords);
+
     if (!mainRecords.success) {
-      console.error("[DNS Creation] Cloudflare error creating main DNS records:", mainRecords.errors || mainRecords.error || "Unknown error");
-      throw new Error("Failed to create DNS records in Cloudflare: " + (mainRecords.errors || mainRecords.error || "Unknown error"));
+      console.error("[DNS Creation] Cloudflare error creating main DNS records:", 
+                   mainRecords.errors || mainRecords.error || "Unknown error");
+      throw new Error("Failed to create DNS records in Cloudflare: " + 
+                     (mainRecords.errors || mainRecords.error || "Unknown error"));
     }
 
     console.log("[DNS Creation] Main DNS records created successfully:", mainRecords);
@@ -69,44 +79,50 @@ export const createDNSRecords = async (
 
 async function createEmailDNSRecords(subdomain: string, domainSuffix: string) {
   console.log("[DNS Creation] Adding email DNS records");
+  
+  // Define the email records we want to create
+  const emailRecordsToCreate = [
+    {
+      type: "MX",
+      name: subdomain.trim(),
+      content: "mx.zoho.com",
+      priority: 10,
+      ttl: 600,
+      proxied: false
+    },
+    {
+      type: "MX",
+      name: subdomain.trim(),
+      content: "mx2.zoho.com",
+      priority: 20,
+      ttl: 600,
+      proxied: false
+    },
+    {
+      type: "MX",
+      name: subdomain.trim(),
+      content: "mx3.zoho.com",
+      priority: 50,
+      ttl: 600,
+      proxied: false
+    },
+    {
+      type: "TXT",
+      name: subdomain.trim(),
+      content: "v=spf1 include:zoho.com ~all",
+      ttl: 60,
+      proxied: false
+    }
+  ];
+  
+  console.log("[DNS Creation] Email records to create:", JSON.stringify(emailRecordsToCreate));
+  
   const { data: emailRecords, error: emailError } = await supabase.functions.invoke("domain-dns", {
     body: {
       action: "create",
       subdomain: subdomain.trim(),
       domain: domainSuffix,
-      records: [
-        {
-          type: "MX",
-          name: subdomain.trim(),
-          content: "mx.zoho.com",
-          priority: 10,
-          ttl: 600,
-          proxied: false
-        },
-        {
-          type: "MX",
-          name: subdomain.trim(),
-          content: "mx2.zoho.com",
-          priority: 20,
-          ttl: 600,
-          proxied: false
-        },
-        {
-          type: "MX",
-          name: subdomain.trim(),
-          content: "mx3.zoho.com",
-          priority: 50,
-          ttl: 600,
-          proxied: false
-        },
-        {
-          type: "TXT",
-          name: subdomain.trim(),
-          content: "v=spf1 include:zoho.com ~all",
-          ttl: 60,
-          proxied: false
-        }
-      ]
+      records: emailRecordsToCreate
     }
   });
 
@@ -114,7 +130,8 @@ async function createEmailDNSRecords(subdomain: string, domainSuffix: string) {
     console.error("[DNS Creation] Warning: Email DNS setup had issues:", emailError);
     // Don't throw here, as main records are already set
   } else if (!emailRecords.success) {
-    console.warn("[DNS Creation] Cloudflare warning for email records:", emailRecords.errors || emailRecords.error || "Unknown issue");
+    console.warn("[DNS Creation] Cloudflare warning for email records:", 
+                emailRecords.errors || emailRecords.error || "Unknown issue");
   } else {
     console.log("[DNS Creation] Email DNS records created successfully");
   }
@@ -141,6 +158,8 @@ async function verifyDNSSetup(subdomain: string, domainSuffix: string, mainRecor
         }
       };
     }
+
+    console.log("[DNS Creation] Verification response:", verificationData);
 
     if (!verificationData.success) {
       console.warn("[DNS Creation] DNS verification failed:", verificationData.error || "Unknown reason");
