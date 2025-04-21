@@ -18,6 +18,8 @@ serve(async (req) => {
       apiVersion: '2023-10-16'
     });
 
+    console.log(`Creating checkout session for user ${user_id}, domain: ${domain_name}.${domain_suffix}, type: ${checkout_type}`);
+    
     let customerId;
 
     // Check if the user already has a Stripe customer ID
@@ -41,6 +43,11 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
+    // Get the origin for correct redirection
+    const origin = req.headers.get("origin") || "";
+    console.log(`Request origin: ${origin}`);
+    
+    // Create the Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
@@ -63,19 +70,22 @@ serve(async (req) => {
         },
       ],
       mode: checkout_type === 'email' ? 'subscription' : 'payment',
-      success_url: `${req.headers.get("origin")}/dashboard`,
-      cancel_url: `${req.headers.get("origin")}/register-domain?canceled=true`,
+      success_url: `${origin}/dashboard`,
+      cancel_url: `${origin}/register-domain?canceled=true`,
     });
 
+    console.log(`Created checkout session: ${session.id}`);
+    console.log(`Success URL: ${origin}/dashboard`);
+    
     return new Response(
       JSON.stringify({ url: session.url }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    console.error(`Error creating checkout session: ${error.message}`);
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
     );
   }
 });
-

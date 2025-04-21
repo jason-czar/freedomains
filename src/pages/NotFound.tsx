@@ -15,8 +15,17 @@ const NotFound = () => {
       // Log the 404 error for debugging
       console.error(
         "404 Error: User attempted to access non-existent route:",
-        location.pathname
+        location.pathname,
+        "Full URL:",
+        window.location.href
       );
+
+      // Dashboard redirect special case
+      if (location.pathname === "/dashboard") {
+        console.log("Detected dashboard access attempt, redirecting to /dashboard");
+        navigate("/dashboard");
+        return;
+      }
 
       // Check if this is a root path access that might be from a subdomain
       if (location.pathname === "/" || location.pathname === "") {
