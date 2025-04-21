@@ -23,10 +23,12 @@ serve(async (req) => {
   // Get environment variables
   const CLOUDFLARE_API_KEY = Deno.env.get('CLOUDFLARE_API_KEY');
   const CLOUDFLARE_ZONE_ID = Deno.env.get('CLOUDFLARE_ZONE_ID');
+  const VERCEL_ACCESS_TOKEN = Deno.env.get('VERCEL_ACCESS_TOKEN');
 
   console.log("Edge function called with env variables present:", {
     hasApiKey: !!CLOUDFLARE_API_KEY,
-    hasZoneId: !!CLOUDFLARE_ZONE_ID
+    hasZoneId: !!CLOUDFLARE_ZONE_ID,
+    hasVercelToken: !!VERCEL_ACCESS_TOKEN
   });
 
   if (!CLOUDFLARE_API_KEY || !CLOUDFLARE_ZONE_ID) {
@@ -50,7 +52,8 @@ serve(async (req) => {
       subdomain,
       domain,
       hasRecords: records ? records.length : 0,
-      hasNameservers: nameservers ? nameservers.length : 0
+      hasNameservers: nameservers ? nameservers.length : 0,
+      hasVercelToken: !!VERCEL_ACCESS_TOKEN
     });
     
     if (!action) {

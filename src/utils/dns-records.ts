@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -21,6 +22,12 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
         }, {
           type: "CNAME",
           name: `_vercel.${subdomain.trim()}`,
+          content: "cname.vercel-dns.com",
+          ttl: 1,
+          proxied: false
+        }, {
+          type: "CNAME",
+          name: `www.${subdomain.trim()}`,
           content: "cname.vercel-dns.com",
           ttl: 1,
           proxied: false
@@ -54,7 +61,7 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
               name: subdomain.trim(),
               content: "mx.zoho.com",
               priority: 10,
-              ttl: 1,
+              ttl: 600,
               proxied: false
             },
             {
@@ -62,14 +69,22 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
               name: subdomain.trim(),
               content: "mx2.zoho.com",
               priority: 20,
-              ttl: 1,
+              ttl: 600,
+              proxied: false
+            },
+            {
+              type: "MX",
+              name: subdomain.trim(),
+              content: "mx3.zoho.com",
+              priority: 50,
+              ttl: 600,
               proxied: false
             },
             {
               type: "TXT",
               name: subdomain.trim(),
               content: "v=spf1 include:zoho.com ~all",
-              ttl: 1,
+              ttl: 60,
               proxied: false
             }
           ]
