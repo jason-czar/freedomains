@@ -118,7 +118,10 @@ const RecordsTabContent: React.FC<RecordsTabContentProps> = ({
       )}
       
       {!loading && inconsistentProxying && (
-        <Alert variant="warning" className="bg-amber-900/20 border-amber-700/50 text-amber-200">
+        <Alert 
+          variant="default" 
+          className="bg-amber-900/20 border-amber-700/50 text-amber-200"
+        >
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Inconsistent proxy settings</AlertTitle>
           <AlertDescription>
