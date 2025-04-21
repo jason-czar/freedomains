@@ -1,13 +1,12 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const createDNSRecords = async (subdomain: string, domainSuffix: string, includeEmail: boolean) => {
-  console.log(`Creating DNS records for ${subdomain}.${domainSuffix}, includeEmail: ${includeEmail}`);
+  console.log(`[DNS Creation] Starting DNS record creation for ${subdomain}.${domainSuffix}, includeEmail: ${includeEmail}`);
   
   try {
     // Step 1: Create main DNS records
-    console.log("Calling domain-dns edge function to create main DNS records");
+    console.log("[DNS Creation] Creating main DNS records (A record and CNAMEs)...");
     const { data: mainRecords, error: mainError } = await supabase.functions.invoke("domain-dns", {
       body: {
         action: "create",
@@ -36,20 +35,20 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
     });
 
     if (mainError) {
-      console.error("Edge function error creating main DNS records:", mainError);
+      console.error("[DNS Creation] Edge function error creating main DNS records:", mainError);
       throw new Error(`Edge function error: ${mainError.message}`);
     }
 
     if (!mainRecords.success) {
-      console.error("Cloudflare error creating main DNS records:", mainRecords.errors || mainRecords.error || "Unknown error");
+      console.error("[DNS Creation] Cloudflare error creating main DNS records:", mainRecords.errors || mainRecords.error || "Unknown error");
       throw new Error("Failed to create DNS records in Cloudflare: " + (mainRecords.errors || mainRecords.error || "Unknown error"));
     }
 
-    console.log("Main DNS records created successfully:", mainRecords);
+    console.log("[DNS Creation] Main DNS records created successfully:", mainRecords);
 
     // Step 2: Add email records if enabled
     if (includeEmail) {
-      console.log("Adding email DNS records");
+      console.log("[DNS Creation] Adding email DNS records");
       const { data: emailRecords, error: emailError } = await supabase.functions.invoke("domain-dns", {
         body: {
           action: "create",
@@ -92,18 +91,18 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
       });
 
       if (emailError) {
-        console.error("Warning: Email DNS setup had issues:", emailError);
+        console.error("[DNS Creation] Warning: Email DNS setup had issues:", emailError);
         // Don't throw here, as main records are already set
       } else if (!emailRecords.success) {
-        console.warn("Cloudflare warning for email records:", emailRecords.errors || emailRecords.error || "Unknown issue");
+        console.warn("[DNS Creation] Cloudflare warning for email records:", emailRecords.errors || emailRecords.error || "Unknown issue");
       } else {
-        console.log("Email DNS records created successfully");
+        console.log("[DNS Creation] Email DNS records created successfully");
       }
     }
 
     // Step 3: Verify records were created properly
     try {
-      console.log("Verifying DNS records");
+      console.log("[DNS Creation] Starting DNS verification...");
       const { data: verificationData, error: verificationError } = await supabase.functions.invoke("domain-dns", {
         body: {
           action: "verify",
@@ -113,7 +112,7 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
       });
 
       if (verificationError) {
-        console.warn("Error during DNS verification:", verificationError);
+        console.warn("[DNS Creation] Error during DNS verification:", verificationError);
         return {
           ...mainRecords,
           verification: {
@@ -124,7 +123,7 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
       }
 
       if (!verificationData.success) {
-        console.warn("DNS verification failed:", verificationData.error || "Unknown reason");
+        console.warn("[DNS Creation] DNS verification failed:", verificationData.error || "Unknown reason");
         return {
           ...mainRecords,
           verification: {
@@ -134,7 +133,7 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
         };
       }
 
-      console.log("DNS verification successful:", verificationData);
+      console.log("[DNS Creation] DNS verification successful:", verificationData);
       return {
         ...mainRecords,
         verification: {
@@ -143,7 +142,7 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
         }
       };
     } catch (verifyError) {
-      console.warn("Exception during DNS verification:", verifyError);
+      console.warn("[DNS Creation] Exception during DNS verification:", verifyError);
       return {
         ...mainRecords,
         verification: {
@@ -153,7 +152,7 @@ export const createDNSRecords = async (subdomain: string, domainSuffix: string, 
       };
     }
   } catch (error) {
-    console.error("Fatal error in createDNSRecords:", error);
+    console.error("[DNS Creation] Fatal error in createDNSRecords:", error);
     toast.error("Failed to create DNS records: " + (error.message || "Unknown error"));
     throw error;
   }

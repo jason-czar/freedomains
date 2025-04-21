@@ -1,6 +1,5 @@
-
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@12.7.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,83 +12,68 @@ serve(async (req) => {
   }
 
   try {
-    const { service, domainName } = await req.json();
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2023-10-16",
+    const { user_id, domain_name, domain_suffix, checkout_type } = await req.json();
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+      apiVersion: '2023-10-16'
     });
 
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    
-    // Get user from supabase auth
-    const userResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/user`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        apikey: Deno.env.get("SUPABASE_ANON_KEY") || "",
-      },
-    });
-    
-    const userData = await userResponse.json();
-    if (!userData.email) throw new Error("User not authenticated or email not available");
-
-    // Check for existing customer or create new one
-    const customers = await stripe.customers.list({ email: userData.email, limit: 1 });
     let customerId;
-    
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
+
+    // Check if the user already has a Stripe customer ID
+    const customerCheck = await stripe.customers.list({
+      metadata: {
+        supabase_id: user_id,
+      },
+      limit: 1,
+    });
+
+    if (customerCheck.data.length > 0) {
+      customerId = customerCheck.data[0].id;
     } else {
-      const newCustomer = await stripe.customers.create({
-        email: userData.email,
+      // Create a new customer if one doesn't exist
+      const customer = await stripe.customers.create({
         metadata: {
-          user_id: userData.id,
+          supabase_id: user_id,
         },
       });
-      customerId = newCustomer.id;
-    }
 
-    // Use the correct price IDs based on the service
-    let priceId;
-    if (service === "email") {
-      priceId = "price_1RFMODPU1VJ4VCmuW8VmGlgO"; // Email service price ID
-    } else if (service === "domain") {
-      priceId = "price_1RFMT3PU1VJ4VCmu06duLLXu"; // Domain renewal price ID
-    } else {
-      throw new Error("Invalid service specified");
+      customerId = customer.id;
     }
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
+      payment_method_types: ['card'],
       line_items: [
         {
-          price: priceId,
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: checkout_type === 'email' ? 'Email Service Activation' : 'Domain Registration',
+              description: checkout_type === 'email' 
+                ? `Email service for ${domain_name}.${domain_suffix}`
+                : `Domain registration for ${domain_name}.${domain_suffix}`
+            },
+            unit_amount: checkout_type === 'email' ? 499 : 1999,
+            recurring: checkout_type === 'email' ? {
+              interval: 'month'
+            } : undefined
+          },
           quantity: 1,
         },
       ],
-      mode: "subscription",
-      success_url: `${req.headers.get("origin")}/billing?success=true`,
-      cancel_url: `${req.headers.get("origin")}/billing?canceled=true`,
-      metadata: {
-        service,
-        domain: domainName,
-        user_id: userData.id,
-      },
+      mode: checkout_type === 'email' ? 'subscription' : 'payment',
+      success_url: `https://www.com.channel/dashboard`,
+      cancel_url: `${req.headers.get("origin")}/register-domain?canceled=true`,
     });
 
     return new Response(
       JSON.stringify({ url: session.url }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
     );
   }
 });
