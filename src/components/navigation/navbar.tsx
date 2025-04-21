@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import NavLinks from "./NavLinks";
 import UserDropdown from "./UserDropdown";
 import MobileMenu from "./MobileMenu";
-
 const navLinks = [{
   title: "Home",
   href: "/"
@@ -22,13 +20,12 @@ const navLinks = [{
   href: "/dashboard",
   authRequired: true
 }];
-
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
-
-  return (
-    <nav className="backdrop-blur-sm sticky top-0 z-50 bg-black/[0.64]">
+  const {
+    user
+  } = useAuth();
+  return <nav className="backdrop-blur-sm sticky top-0 z-50 bg-black/[0.64]">
       <div className="clay-container">
         <div className="flex items-center justify-between h-20">
           <Link to="/" className="flex items-center space-x-2">
@@ -42,12 +39,9 @@ const Navbar = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
-            {user ? (
-              <UserDropdown />
-            ) : (
-              <div className="flex items-center space-x-4">
+            {user ? <UserDropdown /> : <div className="flex items-center space-x-4">
                 <Link to="/login">
-                  <Button variant="ghost" className="clay-button bg-white text-indigo-600">
+                  <Button variant="ghost" className="clay-button bg-[#5c5c5c]/65 text-green-500">
                     Log in
                   </Button>
                 </Link>
@@ -56,27 +50,16 @@ const Navbar = () => {
                     Sign up
                   </Button>
                 </Link>
-              </div>
-            )}
+              </div>}
           </div>
           
-          <Button 
-            variant="ghost" 
-            className="md:hidden" 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
+          <Button variant="ghost" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </Button>
         </div>
       </div>
       
-      <MobileMenu 
-        isOpen={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        navLinks={navLinks}
-      />
-    </nav>
-  );
+      <MobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} navLinks={navLinks} />
+    </nav>;
 };
-
 export default Navbar;
