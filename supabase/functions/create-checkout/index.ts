@@ -63,7 +63,7 @@ serve(async (req) => {
         },
       ],
       mode: checkout_type === 'email' ? 'subscription' : 'payment',
-      success_url: `https://www.com.channel/dashboard`,
+      success_url: `${req.headers.get("origin")}/dashboard`,
       cancel_url: `${req.headers.get("origin")}/register-domain?canceled=true`,
     });
 
