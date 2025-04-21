@@ -70,7 +70,7 @@ export const createDNSRecords = async (
         subdomain: subdomain.trim(),
         domain: domainSuffix,
         records: mainRecordsToCreate,
-        useFullyQualifiedNames: true  // New flag to signal we're using full domain names
+        useFullyQualifiedNames: true  // Send flag to signal we're using full domain names
       }
     });
 
@@ -151,7 +151,7 @@ async function createEmailDNSRecords(subdomain: string, domainSuffix: string) {
       subdomain: subdomain.trim(),
       domain: domainSuffix,
       records: emailRecordsToCreate,
-      useFullyQualifiedNames: true  // New flag to signal we're using full domain names
+      useFullyQualifiedNames: true  // Send flag to signal we're using full domain names
     }
   });
 

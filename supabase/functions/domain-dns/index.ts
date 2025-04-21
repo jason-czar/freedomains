@@ -41,6 +41,7 @@ serve(async (req) => {
     
     try {
       requestBody = await req.json();
+      console.log("Request body received:", JSON.stringify(requestBody));
     } catch (jsonError) {
       console.error("Error parsing request body:", jsonError);
       return errorResponse('Invalid JSON in request body', 400);
@@ -102,6 +103,7 @@ serve(async (req) => {
         if (!records || !Array.isArray(records) || records.length === 0) {
           return errorResponse('Missing or invalid records data');
         }
+        console.log(`Adding records:`, JSON.stringify(records));
         return await addRecord(
           records, 
           subdomain, 
