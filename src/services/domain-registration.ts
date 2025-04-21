@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { createDNSRecords, checkDNSStatus, checkVercelStatus } from "@/utils/dns-records";
+import { createDNSRecords, checkDNSStatus, checkVercelStatus } from "@/utils/dns";
 import { toast } from "sonner";
 
 export const registerDomain = async (
