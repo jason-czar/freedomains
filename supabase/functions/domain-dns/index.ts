@@ -53,7 +53,8 @@ serve(async (req) => {
       nameservers, 
       records,
       record_id,
-      record
+      record,
+      useFullyQualifiedNames = false
     } = requestBody as DomainRequest;
     
     console.log(`Processing domain-dns action: ${action}`, {
@@ -61,7 +62,8 @@ serve(async (req) => {
       domain,
       hasRecords: records ? records.length : 0,
       hasNameservers: nameservers ? nameservers.length : 0,
-      hasVercelToken: !!VERCEL_ACCESS_TOKEN
+      hasVercelToken: !!VERCEL_ACCESS_TOKEN,
+      useFullyQualifiedNames
     });
     
     if (!action) {
@@ -105,7 +107,8 @@ serve(async (req) => {
           subdomain, 
           domain, 
           CLOUDFLARE_ZONE_ID, 
-          CLOUDFLARE_API_KEY
+          CLOUDFLARE_API_KEY,
+          useFullyQualifiedNames
         );
         
       case 'delete_record':

@@ -1,4 +1,3 @@
-
 import { DNSRecord } from "./types.ts";
 import { formatResponse, errorResponse, getCloudflareHeaders } from "./helpers.ts";
 import { updateDomainSettings } from "./domain-settings.ts";
@@ -136,12 +135,14 @@ export async function addRecord(
   subdomain: string, 
   domainSuffix: string,
   zoneId: string,
-  apiKey: string
+  apiKey: string,
+  useFullyQualifiedNames = false
 ) {
   const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
   const results = [];
   
   console.log(`Adding DNS records for ${fullDomain}:`, JSON.stringify(records));
+  console.log(`Using fully qualified names: ${useFullyQualifiedNames}`);
   
   // First check if there are any conflicting records
   for (const record of records) {
@@ -155,14 +156,23 @@ export async function addRecord(
     
     // Prepare the name for checking conflicts
     let recordName;
-    if (record.name === '@') {
-      recordName = fullDomain;
-    } else if (record.name.includes('.')) {
-      // If it already has a dot, assume it's a fully qualified domain name
+    
+    // If we're using fully qualified names already provided in the record
+    if (useFullyQualifiedNames) {
       recordName = record.name;
+      console.log(`Using fully qualified name directly: ${recordName}`);
     } else {
-      // If it's just a subdomain part, add the domain
-      recordName = `${record.name}.${domainSuffix}`;
+      // Otherwise format based on input
+      if (record.name === '@') {
+        recordName = fullDomain;
+      } else if (record.name.includes('.')) {
+        // If it already has a dot, assume it's a fully qualified domain name
+        recordName = record.name;
+      } else {
+        // If it's just a subdomain part, add the domain
+        recordName = `${record.name}.${domainSuffix}`;
+      }
+      console.log(`Formatted record name: ${recordName}`);
     }
     
     console.log(`Processing record: type=${record.type}, name=${record.name}, prepared name=${recordName}`);
@@ -188,22 +198,22 @@ export async function addRecord(
       }
     }
     
-    const recordData: DNSRecord = {
-      type: record.type,
-      content: record.content,
-      ttl: record.ttl || 1
-    };
+    // Create a copy of the record to modify for Cloudflare
+    const recordData: DNSRecord = { ...record };
     
-    // Fix name formatting based on input
-    if (record.name === '@') {
-      // Root domain
-      recordData.name = fullDomain;
-    } else if (record.name.includes('.')) {
-      // Already a fully qualified domain name
-      recordData.name = record.name;
-    } else {
-      // Subdomain - we need to fully qualify it with the domain suffix
-      recordData.name = `${record.name}.${domainSuffix}`;
+    // Don't modify name if we're using fully qualified names
+    if (!useFullyQualifiedNames) {
+      // Fix name formatting based on input
+      if (record.name === '@') {
+        // Root domain
+        recordData.name = fullDomain;
+      } else if (record.name.includes('.')) {
+        // Already a fully qualified domain name
+        recordData.name = record.name;
+      } else {
+        // Subdomain - we need to fully qualify it with the domain suffix
+        recordData.name = `${record.name}.${domainSuffix}`;
+      }
     }
     
     if (record.type === 'MX' && record.priority !== undefined) {

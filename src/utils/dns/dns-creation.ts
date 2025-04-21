@@ -11,7 +11,7 @@ export const createDNSRecords = async (
   console.log(`[DNS Creation] Starting DNS record creation for ${subdomain}.${domainSuffix}, includeEmail: ${includeEmail}`);
   
   try {
-    // Step 1: First check if the domain already exists in Cloudflare
+    // Step 1: First check if the subdomain already exists in Cloudflare
     console.log("[DNS Creation] Checking if domain already exists...");
     const { data: checkData, error: checkError } = await supabase.functions.invoke("domain-dns", {
       body: {
@@ -40,22 +40,23 @@ export const createDNSRecords = async (
     // Step 2: Create main DNS records
     console.log("[DNS Creation] Creating main DNS records (A record and CNAMEs)...");
     
-    // Define the records we want to create
+    // Define the records we want to create - Use FULLY QUALIFIED domain names
+    // This is crucial since the parent domain already has records
     const mainRecordsToCreate = [{
       type: "A",
-      name: subdomain.trim(),
+      name: `${subdomain.trim()}.${domainSuffix}`,  // Use fully qualified domain
       content: "76.76.21.21",
       ttl: 1,
       proxied: true
     }, {
       type: "CNAME",
-      name: `_vercel.${subdomain.trim()}`,
+      name: `_vercel.${subdomain.trim()}.${domainSuffix}`,  // Use fully qualified domain
       content: "cname.vercel-dns.com",
       ttl: 1,
       proxied: false
     }, {
       type: "CNAME",
-      name: `www.${subdomain.trim()}`,
+      name: `www.${subdomain.trim()}.${domainSuffix}`,  // Use fully qualified domain
       content: "cname.vercel-dns.com",
       ttl: 1,
       proxied: false
@@ -68,7 +69,8 @@ export const createDNSRecords = async (
         action: "create",
         subdomain: subdomain.trim(),
         domain: domainSuffix,
-        records: mainRecordsToCreate
+        records: mainRecordsToCreate,
+        useFullyQualifiedNames: true  // New flag to signal we're using full domain names
       }
     });
 
@@ -106,11 +108,11 @@ export const createDNSRecords = async (
 async function createEmailDNSRecords(subdomain: string, domainSuffix: string) {
   console.log("[DNS Creation] Adding email DNS records");
   
-  // Define the email records we want to create
+  // Define the email records we want to create - Use FULLY QUALIFIED domain names
   const emailRecordsToCreate = [
     {
       type: "MX",
-      name: subdomain.trim(),
+      name: `${subdomain.trim()}.${domainSuffix}`,  // Use fully qualified domain
       content: "mx.zoho.com",
       priority: 10,
       ttl: 600,
@@ -118,7 +120,7 @@ async function createEmailDNSRecords(subdomain: string, domainSuffix: string) {
     },
     {
       type: "MX",
-      name: subdomain.trim(),
+      name: `${subdomain.trim()}.${domainSuffix}`,  // Use fully qualified domain
       content: "mx2.zoho.com",
       priority: 20,
       ttl: 600,
@@ -126,7 +128,7 @@ async function createEmailDNSRecords(subdomain: string, domainSuffix: string) {
     },
     {
       type: "MX",
-      name: subdomain.trim(),
+      name: `${subdomain.trim()}.${domainSuffix}`,  // Use fully qualified domain
       content: "mx3.zoho.com",
       priority: 50,
       ttl: 600,
@@ -134,7 +136,7 @@ async function createEmailDNSRecords(subdomain: string, domainSuffix: string) {
     },
     {
       type: "TXT",
-      name: subdomain.trim(),
+      name: `${subdomain.trim()}.${domainSuffix}`,  // Use fully qualified domain
       content: "v=spf1 include:zoho.com ~all",
       ttl: 60,
       proxied: false
@@ -148,7 +150,8 @@ async function createEmailDNSRecords(subdomain: string, domainSuffix: string) {
       action: "create",
       subdomain: subdomain.trim(),
       domain: domainSuffix,
-      records: emailRecordsToCreate
+      records: emailRecordsToCreate,
+      useFullyQualifiedNames: true  // New flag to signal we're using full domain names
     }
   });
 

@@ -112,15 +112,29 @@ export async function createDomain(
     const createdRecords = [];
     const failedRecords = [];
     
+    // Check if we're using fully qualified names in the records
+    const useFullyQualifiedNames = records.some(r => 
+      r.name && r.name.includes('.') && r.name.endsWith(domainSuffix)
+    );
+    
+    console.log(`Records appear to use fully qualified names: ${useFullyQualifiedNames}`);
+    
     for (const record of records) {
-      const recordName = record.name.includes('.') ? record.name : `${record.name}.${domainSuffix}`;
+      // If using fully qualified names, use the record name as-is
+      // Otherwise format it according to our standard rules
+      let recordName;
+      if (useFullyQualifiedNames) {
+        recordName = record.name;
+      } else {
+        recordName = record.name.includes('.') ? record.name : `${record.name}.${domainSuffix}`;
+      }
+      
       console.log(`Creating ${record.type} record: ${recordName} -> ${record.content}`);
       
       const createUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
       
       try {
         // Configure proxied value based on record type and user settings
-        // Default: A, AAAA = proxied, CNAME = check name (Vercel CNAMEs are never proxied)
         let isProxied = false;
         if (record.proxied !== undefined) {
           isProxied = record.proxied;

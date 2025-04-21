@@ -21,4 +21,5 @@ export interface DomainRequest {
   records?: DNSRecord[];
   record_id?: string;
   record?: DNSRecord;
+  useFullyQualifiedNames?: boolean;
 }
