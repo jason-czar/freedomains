@@ -78,9 +78,7 @@ const Index = () => {
                     </a>
                   </div>
                 </div>
-                <div className="h-64 w-64 rounded-clay-lg bg-gradient-to-br from-clay-lavender/80 to-clay-blue/80 shadow-clay-md flex items-center justify-center">
-                  <span className="text-9xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-indigo-700 to-blue-700">D</span>
-                </div>
+                
               </div>
             </div>
           </div>
