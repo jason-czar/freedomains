@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { validateDomainName } from "@/utils/domain-validation";
 import { checkPaymentMethod, redirectToStripeCheckout } from "@/utils/payment";
-import { registerDomain } from "@/services/domain-registration";
+import { registerDomain } from "@/services/domain";
 
 export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
   const [creatingDomain, setCreatingDomain] = useState(false);
