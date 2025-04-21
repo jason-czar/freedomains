@@ -141,6 +141,8 @@ export async function addRecord(
   const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
   const results = [];
   
+  console.log(`Adding DNS records for ${fullDomain}:`, JSON.stringify(records));
+  
   // First check if there are any conflicting records
   for (const record of records) {
     if (!record.type || (!record.name && record.name !== '@') || !record.content) {
@@ -152,12 +154,18 @@ export async function addRecord(
     }
     
     // Prepare the name for checking conflicts
-    let recordName = record.name;
+    let recordName;
     if (record.name === '@') {
       recordName = fullDomain;
-    } else if (!record.name.includes('.')) {
-      recordName = `${record.name}.${fullDomain}`;
+    } else if (record.name.includes('.')) {
+      // If it already has a dot, assume it's a fully qualified domain name
+      recordName = record.name;
+    } else {
+      // If it's just a subdomain part, add the domain
+      recordName = `${record.name}.${domainSuffix}`;
     }
+    
+    console.log(`Processing record: type=${record.type}, name=${record.name}, prepared name=${recordName}`);
     
     // Check for existing conflicting records
     if (['A', 'AAAA', 'CNAME'].includes(record.type)) {
@@ -170,6 +178,7 @@ export async function addRecord(
       const checkData = await checkResponse.json();
       
       if (checkData.success && checkData.result && checkData.result.length > 0) {
+        console.warn(`Conflicting record found: ${record.type} record for ${recordName} already exists`);
         results.push({
           success: false,
           error: `A ${record.type} record with name ${recordName} already exists`,
@@ -186,15 +195,15 @@ export async function addRecord(
     };
     
     // Fix name formatting based on input
-    if (record.name === '@' || record.name === fullDomain) {
+    if (record.name === '@') {
       // Root domain
       recordData.name = fullDomain;
     } else if (record.name.includes('.')) {
       // Already a fully qualified domain name
       recordData.name = record.name;
     } else {
-      // Subdomain
-      recordData.name = `${record.name}.${fullDomain}`;
+      // Subdomain - we need to fully qualify it with the domain suffix
+      recordData.name = `${record.name}.${domainSuffix}`;
     }
     
     if (record.type === 'MX' && record.priority !== undefined) {

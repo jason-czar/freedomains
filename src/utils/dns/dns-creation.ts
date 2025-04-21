@@ -11,7 +11,33 @@ export const createDNSRecords = async (
   console.log(`[DNS Creation] Starting DNS record creation for ${subdomain}.${domainSuffix}, includeEmail: ${includeEmail}`);
   
   try {
-    // Step 1: Create main DNS records
+    // Step 1: First check if the domain already exists in Cloudflare
+    console.log("[DNS Creation] Checking if domain already exists...");
+    const { data: checkData, error: checkError } = await supabase.functions.invoke("domain-dns", {
+      body: {
+        action: "check",
+        subdomain: subdomain.trim(),
+        domain: domainSuffix
+      }
+    });
+
+    if (checkError) {
+      console.error("[DNS Creation] Error checking domain existence:", checkError);
+      throw new Error(`Error checking domain existence: ${checkError.message}`);
+    }
+
+    console.log("[DNS Creation] Domain check result:", checkData);
+    
+    if (!checkData.isAvailable) {
+      console.warn("[DNS Creation] Domain already exists in Cloudflare DNS");
+      return {
+        success: false,
+        error: "Domain already exists in Cloudflare DNS. Please try a different name.",
+        message: "This subdomain is already registered. Please try a different name."
+      };
+    }
+    
+    // Step 2: Create main DNS records
     console.log("[DNS Creation] Creating main DNS records (A record and CNAMEs)...");
     
     // Define the records we want to create
@@ -62,12 +88,12 @@ export const createDNSRecords = async (
 
     console.log("[DNS Creation] Main DNS records created successfully:", mainRecords);
 
-    // Step 2: Add email records if enabled
+    // Step 3: Add email records if enabled
     if (includeEmail) {
       await createEmailDNSRecords(subdomain, domainSuffix);
     }
 
-    // Step 3: Verify records were created properly
+    // Step 4: Verify records were created properly
     return await verifyDNSSetup(subdomain, domainSuffix, mainRecords);
 
   } catch (error) {

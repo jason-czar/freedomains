@@ -9,22 +9,57 @@ export async function checkDomain(
   apiKey: string
 ) {
   const fullDomain = subdomain ? `${subdomain}.${domainSuffix}` : domainSuffix;
-  const checkUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${fullDomain}`;
+  console.log(`Checking domain availability for: ${fullDomain}`);
   
-  const response = await fetch(checkUrl, {
-    method: 'GET',
-    headers: getCloudflareHeaders(apiKey),
-  });
-
-  const data = await response.json();
-  
-  const isAvailable = !data.result || data.result.length === 0;
-  
-  return formatResponse({ 
-    isAvailable,
-    fullDomain,
-    cloudflareResponse: data
-  });
+  try {
+    // Check if A record exists
+    const checkAUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=A&name=${fullDomain}`;
+    const responseA = await fetch(checkAUrl, {
+      method: 'GET',
+      headers: getCloudflareHeaders(apiKey),
+    });
+    const dataA = await responseA.json();
+    
+    // Check if CNAME record exists
+    const checkCnameUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=CNAME&name=${fullDomain}`;
+    const responseCname = await fetch(checkCnameUrl, {
+      method: 'GET',
+      headers: getCloudflareHeaders(apiKey),
+    });
+    const dataCname = await responseCname.json();
+    
+    // Check if _vercel CNAME record exists
+    const checkVercelUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=CNAME&name=_vercel.${fullDomain}`;
+    const responseVercel = await fetch(checkVercelUrl, {
+      method: 'GET',
+      headers: getCloudflareHeaders(apiKey),
+    });
+    const dataVercel = await responseVercel.json();
+    
+    // Domain is available if none of these records exist
+    const hasARecord = dataA.success && dataA.result && dataA.result.length > 0;
+    const hasCnameRecord = dataCname.success && dataCname.result && dataCname.result.length > 0;
+    const hasVercelRecord = dataVercel.success && dataVercel.result && dataVercel.result.length > 0;
+    
+    const isAvailable = !hasARecord && !hasCnameRecord && !hasVercelRecord;
+    console.log(`Domain ${fullDomain} availability check: ${isAvailable ? 'Available' : 'Not Available'}`);
+    console.log(`- Has A record: ${hasARecord}`);
+    console.log(`- Has CNAME record: ${hasCnameRecord}`);
+    console.log(`- Has Vercel CNAME record: ${hasVercelRecord}`);
+    
+    return formatResponse({ 
+      isAvailable,
+      fullDomain,
+      existingRecords: {
+        a: hasARecord ? dataA.result : null,
+        cname: hasCnameRecord ? dataCname.result : null,
+        vercel: hasVercelRecord ? dataVercel.result : null
+      }
+    });
+  } catch (error) {
+    console.error(`Error checking domain availability for ${fullDomain}:`, error);
+    return errorResponse(`Error checking domain availability: ${error.message}`, 500);
+  }
 }
 
 export async function createDomain(
