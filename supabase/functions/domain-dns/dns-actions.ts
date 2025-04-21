@@ -1,4 +1,3 @@
-
 import { DNSRecord } from "./types.ts";
 import { formatResponse, errorResponse, getCloudflareHeaders } from "./helpers.ts";
 import { updateDomainSettings } from "./domain-settings.ts";
