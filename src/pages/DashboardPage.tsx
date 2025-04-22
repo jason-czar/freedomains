@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import DNSRecordManager from "@/components/ui/dns-record-manager";
+import { CheckoutSuccessHandler } from "@/components/checkout/CheckoutSuccessHandler";
 
 // Import dashboard components
 import DomainsTab from "@/components/dashboard/DomainsTab";
@@ -60,8 +61,12 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex flex-col min-h-screen">
+      {/* Handle Stripe checkout success */}
+      <CheckoutSuccessHandler />
+      
       <Navbar />
+      
       <main className="flex-grow bg-clay-base/30 py-10">
         <div className="clay-container">
           <div className="flex-1">

@@ -28,7 +28,10 @@ serve(async (req) => {
   console.log("Edge function called with env variables present:", {
     hasApiKey: !!CLOUDFLARE_API_KEY,
     hasZoneId: !!CLOUDFLARE_ZONE_ID,
-    hasVercelToken: !!VERCEL_ACCESS_TOKEN
+    hasVercelToken: !!VERCEL_ACCESS_TOKEN,
+    apiKeyLength: CLOUDFLARE_API_KEY ? CLOUDFLARE_API_KEY.length : 0,
+    zoneIdLength: CLOUDFLARE_ZONE_ID ? CLOUDFLARE_ZONE_ID.length : 0,
+    timestamp: new Date().toISOString()
   });
 
   if (!CLOUDFLARE_API_KEY || !CLOUDFLARE_ZONE_ID) {

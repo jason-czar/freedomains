@@ -213,7 +213,28 @@ export async function createDomain(
   const createUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
   
   try {
+    // First check if there are any existing records that might conflict
+    console.log(`Checking for existing records that might conflict with ${fullDomain}...`);
+    const checkUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${fullDomain}`;
+    
+    const checkResponse = await fetch(checkUrl, {
+      method: 'GET',
+      headers: getCloudflareHeaders(apiKey),
+    });
+    
+    const checkData = await checkResponse.json();
+    console.log(`Existing records check for ${fullDomain}:`, JSON.stringify(checkData));
+    
+    if (checkData.success && checkData.result && checkData.result.length > 0) {
+      console.log(`Found ${checkData.result.length} existing records for ${fullDomain}`);
+      // We found existing records - log them for debugging
+      checkData.result.forEach(record => {
+        console.log(`Existing ${record.type} record: ${record.name} -> ${record.content}`);
+      });
+    }
+    
     // Default behavior: Create A record (proxied) and Vercel CNAME (not proxied)
+    console.log(`Attempting to create A record for ${fullDomain}...`);
     const response = await fetch(createUrl, {
       method: 'POST',
       headers: getCloudflareHeaders(apiKey),
@@ -227,6 +248,7 @@ export async function createDomain(
     });
 
     const data = await response.json();
+    console.log(`A record creation response for ${fullDomain}:`, JSON.stringify(data));
     
     if (!data.success) {
       console.error(`Failed to create A record for ${fullDomain}:`, data.errors);

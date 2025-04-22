@@ -1,0 +1,7 @@
+{
+  "name": "stripe-webhook",
+  "version": "1.0",
+  "description": "Handles Stripe webhook events",
+  "verify_jwt": false,
+  "import_map": "./import_map.json"
+}

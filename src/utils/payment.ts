@@ -31,23 +31,51 @@ export const redirectToStripeCheckout = async (
 
   try {
     console.log(`Creating checkout for ${service} service...`);
+    
+    // Show a loading toast to indicate the checkout is being created
+    const loadingToast = toast.loading("Creating checkout session...");
+    
     const { data, error } = await supabase.functions.invoke("create-checkout", {
       body: {
-        service,
-        domainName: `${newDomain}.${domainSuffix}`
+        user_id: userId,
+        domain_name: newDomain,
+        domain_suffix: domainSuffix,
+        checkout_type: service,
+        include_email: service === 'email' ? true : false
       }
     });
+    
+    // Dismiss the loading toast
+    toast.dismiss(loadingToast);
 
     if (error) {
       console.error("Error creating checkout:", error);
+      
+      // Display a more helpful error message
+      toast.error(
+        "Unable to create checkout session. Please ensure your Stripe integration is properly configured.", 
+        { duration: 6000 }
+      );
+      
+      // Show a more technical error for debugging
+      console.error("Technical details:", JSON.stringify(error));
       throw error;
     }
 
     if (!data?.url) {
+      toast.error("Checkout session created but no URL was returned");
       throw new Error("No checkout URL returned");
     }
 
     console.log("Redirecting to checkout:", data.url);
+    toast.success("Redirecting to Stripe checkout...");
+    
+    // Short delay before redirect to ensure toast is visible
+    setTimeout(() => {
+      // Directly navigate to the Stripe checkout URL
+      window.location.href = data.url;
+    }, 1000);
+    
     return data.url;
   } catch (error: any) {
     console.error("Error during checkout:", error);

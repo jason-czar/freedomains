@@ -26,13 +26,11 @@ const RegisterDomainButton: React.FC<RegisterDomainButtonProps> = ({
     }
   };
 
-  const buttonText = hasPaymentMethod ? 
-    (isLoading ? "Registering..." : "Register") : 
-    "Add Payment Method & Register";
+  const buttonText = isLoading ? "Registering..." : "Register Domain (Free)";
 
-  const buttonIcon = hasPaymentMethod ? 
-    (isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-800" /> : <PlusCircle className="h-4 w-4 mr-2 text-gray-800" />) : 
-    <CreditCard className="h-4 w-4 mr-2 text-gray-800" />;
+  const buttonIcon = isLoading ? 
+    <Loader2 className="h-4 w-4 mr-2 animate-spin text-gray-800" /> : 
+    <PlusCircle className="h-4 w-4 mr-2 text-gray-800" />;
 
   return (
     <Button 

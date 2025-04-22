@@ -96,11 +96,15 @@ const DomainRegistrationForm: React.FC<DomainRegistrationFormProps> = ({
           </div>
         )}
 
-        {isAvailable && !hasPaymentMethod && !showPaymentForm && (
+        {isAvailable && !showPaymentForm && (
           <div className="mt-4 text-center text-gray-500 text-sm">
-            <p>Payment information is required for domain registration.</p>
-            <p>Your domain will be free for the first year, then renew at $19.99/year.</p>
-            {includeEmail && <p>Email service will be billed at $4.99/month starting immediately.</p>}
+            <p>Domain registration is completely free!</p>
+            {includeEmail && (
+              <div className="mt-2 p-2 bg-indigo-900/20 rounded border border-indigo-500/20">
+                <p className="text-indigo-300">Email service requires payment and will be billed at $4.99/month.</p>
+                <p className="text-gray-400 text-xs mt-1">You'll be redirected to Stripe checkout after domain registration.</p>
+              </div>
+            )}
           </div>
         )}
       </div>

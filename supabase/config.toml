@@ -4,16 +4,29 @@ project_id = "ufwptcqxikxomjmpfxsf"
 [api]
 enabled = true
 port = 54321
-schemas = ["public", "storage"]
+schemas = ["public", "storage", "auth"]
 
 [db]
 port = 54322
+
+[studio]
+port = 54323
+
+[auth]
+enabled = true
 
 [realtime]
 enabled = true
 
 [storage]
 enabled = true
+
+[analytics]
+enabled = true
+
+# Edge Functions Configuration
+[functions]
+# Functions configuration
 
 [functions.domain-dns]
 verify_jwt = true

@@ -14,7 +14,24 @@ serve(async (req) => {
 
   try {
     const { user_id, domain_name, domain_suffix, checkout_type } = await req.json();
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+    
+    // Log request details
+    console.log(`Request received for checkout:`, {
+      user_id,
+      domain_name,
+      domain_suffix,
+      checkout_type
+    });
+    
+    // Check if STRIPE_SECRET_KEY is set
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!stripeKey) {
+      console.error('STRIPE_SECRET_KEY environment variable is not set');
+      throw new Error('Stripe secret key is missing');
+    }
+    
+    console.log('Creating Stripe instance with API key');
+    const stripe = new Stripe(stripeKey, {
       apiVersion: '2023-10-16'
     });
 
@@ -47,7 +64,7 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "";
     console.log(`Request origin: ${origin}`);
     
-    // Create the Stripe checkout session
+    // Create the Stripe checkout session with metadata for the webhook
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
@@ -70,8 +87,15 @@ serve(async (req) => {
         },
       ],
       mode: checkout_type === 'email' ? 'subscription' : 'payment',
-      success_url: `${origin}/dashboard`,
+      success_url: `${origin}/dashboard?checkout_success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/register-domain?canceled=true`,
+      metadata: {
+        user_id,
+        domain_name,
+        domain_suffix,
+        include_email: checkout_type === 'email' ? 'true' : 'false',
+        checkout_type
+      }
     });
 
     console.log(`Created checkout session: ${session.id}`);
@@ -82,9 +106,24 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error(`Error creating checkout session: ${error.message}`);
+    console.error(`Error creating checkout session:`, error);
+    
+    // Log more detailed information about the error
+    if (error instanceof Error) {
+      console.error(`Error name: ${error.name}`);
+      console.error(`Error message: ${error.message}`);
+      console.error(`Error stack: ${error.stack}`);
+    }
+    
+    // Check if Stripe environment variables are set
+    console.log(`Environment check:`);
+    console.log(`STRIPE_SECRET_KEY exists: ${Boolean(Deno.env.get('STRIPE_SECRET_KEY'))}`);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        name: error instanceof Error ? error.name : 'UnknownError'
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
     );
   }

@@ -21,13 +21,14 @@ const EmailAddOnOption: React.FC<EmailAddOnOptionProps> = ({
           <Mail className="h-5 w-5 text-indigo-400" />
         </div>
         <div>
-          <h3 className="text-white font-medium">Email Service</h3>
+          <h3 className="text-white font-medium">Email Service (Premium)</h3>
           <p className="text-gray-400 text-sm">
             Add email addresses like you@{domain}
           </p>
           <div className="mt-1 flex items-center">
             <span className="text-indigo-400 font-bold">$4.99</span>
             <span className="text-gray-500 text-sm ml-1">/month</span>
+            <span className="ml-2 px-2 py-0.5 bg-indigo-700/50 rounded-full text-xs text-indigo-300">Optional Add-on</span>
           </div>
         </div>
       </div>

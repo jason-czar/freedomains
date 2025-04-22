@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { validateDomainName } from "@/utils/domain-validation";
-import { checkPaymentMethod, redirectToStripeCheckout } from "@/utils/payment";
+import { checkPaymentMethod, redirectToStripeCheckout } from "@/services/stripe";
 import { registerDomain } from "@/services/domain";
 
 export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
@@ -41,24 +41,21 @@ export const useDomainRegistration = (fetchDomains: () => Promise<void>) => {
       toast.error("This domain is not available");
       return;
     }
-
-    if (!hasPaymentMethod) {
-      const checkoutUrl = await redirectToStripeCheckout('domain', user.id, newDomain, domainSuffix);
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-      }
-      return;
-    }
+    
+    // Domain registration is now free - no payment required
+    // Only redirect to Stripe if the user wants email service
 
     setCreatingDomain(true);
     try {
+      // Register the domain first
       await registerDomain(user.id, newDomain, domainSuffix, includeEmail);
 
+      // If email service is selected, redirect to Stripe checkout
       if (includeEmail) {
-        const checkoutUrl = await redirectToStripeCheckout('email', user.id, newDomain, domainSuffix);
-        if (checkoutUrl) {
-          window.location.href = checkoutUrl;
-        }
+        console.log("Redirecting to Stripe email checkout...");
+        toast.success("Domain registered successfully! Redirecting to email service setup...");
+        // The redirectToStripeCheckout function now handles the redirect directly
+        await redirectToStripeCheckout('email', user.id, newDomain, domainSuffix);
         return;
       }
 
