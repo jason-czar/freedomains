@@ -78,10 +78,72 @@ serve(async (req) => {
 
     // Handle checkout.session.completed event
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-      console.log(`Processing checkout session: ${session.id}`);
-      
-      // Extract metadata from the session
+      const session = event.data.object as Stripe.Checkout.Session;
+      console.log("Processing checkout.session.completed event", {
+        sessionId: session.id,
+        metadata: session.metadata,
+        customerId: session.customer,
+        clientReferenceId: session.client_reference_id,
+      });
+
+      // For payment links, the metadata might be in the client_reference_id instead
+      // and we might need to look up the user's active domain registration
+      if (!session.metadata?.domain_name || !session.metadata?.domain_suffix) {
+        console.log("Metadata not found in session, checking for client_reference_id");
+        
+        if (session.client_reference_id) {
+          try {
+            // Use the client_reference_id as the user_id
+            const userId = session.client_reference_id;
+            console.log(`Looking up most recent domain for user ${userId}`);
+            
+            // Get the most recent domain registered by this user
+            const { data: domainData, error: domainError } = await supabase
+              .from("domains")
+              .select("*")
+              .eq("user_id", userId)
+              .order("created_at", { ascending: false })
+              .limit(1);
+            
+            if (domainError || !domainData || domainData.length === 0) {
+              console.error("Error finding domain for user", { userId, error: domainError });
+              return new Response(JSON.stringify({ error: "Could not find domain for user" }), {
+                status: 400,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              });
+            }
+            
+            const domain = domainData[0];
+            console.log("Found domain for payment link checkout", {
+              domainId: domain.id,
+              subdomain: domain.subdomain,
+              domainSuffix: domain.settings?.domain_suffix,
+            });
+            
+            // Set the metadata from the found domain
+            session.metadata = {
+              domain_name: domain.subdomain,
+              domain_suffix: domain.settings?.domain_suffix || "com.channel",
+              user_id: userId,
+              checkout_type: "email", // Assume email for payment links
+              include_email: "true"
+            };
+          } catch (error) {
+            console.error("Error processing payment link checkout", error);
+            return new Response(JSON.stringify({ error: "Error processing payment link" }), {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        } else {
+          console.error("Missing required metadata and client_reference_id in checkout session");
+          return new Response(JSON.stringify({ error: "Missing required metadata and client_reference_id" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
       const metadata = session.metadata || {};
       const { domain_name, domain_suffix, include_email, user_id, checkout_type } = metadata;
       

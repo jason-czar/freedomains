@@ -51,15 +51,15 @@ export const createCheckoutSession = async (
     
     // Get the current origin for redirect URLs
     const origin = window.location.origin;
-    const dashboardUrl = `${origin}/dashboard`;
+    const dashboardUrl = `${origin}/dashboard?checkout_success=true`;
     
     // Use the correct payment link based on the service type
     if (service === 'domain') {
-      // Domain Registration link with success URL
-      form.action = `https://buy.stripe.com/test_5kA5mCaWY0vc5WM000?success_url=${encodeURIComponent(dashboardUrl)}`;
+      // Domain Registration link with success URL and additional parameters
+      form.action = `https://buy.stripe.com/test_5kA5mCaWY0vc5WM000?client_reference_id=${encodeURIComponent(userId)}&success_url=${encodeURIComponent(dashboardUrl)}`;
     } else {
-      // Email Suite link with success URL
-      form.action = `https://buy.stripe.com/test_5kA02ifde4Lsfxm7st?success_url=${encodeURIComponent(dashboardUrl)}`;
+      // Email Suite link with success URL and additional parameters
+      form.action = `https://buy.stripe.com/test_5kA02ifde4Lsfxm7st?client_reference_id=${encodeURIComponent(userId)}&success_url=${encodeURIComponent(dashboardUrl)}`;
     }
     
     // Add hidden fields with metadata

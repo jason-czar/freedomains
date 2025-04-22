@@ -9,8 +9,15 @@ export function CheckoutSuccessHandler() {
   const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
-    if (checkoutSuccess && sessionId) {
-      handleCheckoutSuccess(sessionId);
+    // Handle success from payment links (no session_id)
+    if (checkoutSuccess) {
+      if (sessionId) {
+        // If we have a session_id, use it (for API-created checkout sessions)
+        handleCheckoutSuccess(sessionId);
+      } else {
+        // For payment links that don't provide a session_id
+        handlePaymentLinkSuccess();
+      }
     }
   }, [checkoutSuccess, sessionId]);
 
@@ -47,6 +54,22 @@ export function CheckoutSuccessHandler() {
     } catch (error) {
       console.error("Error handling checkout success:", error);
       toast.error("There was an issue processing your domain registration. Our team has been notified.");
+    }
+  };
+
+  const handlePaymentLinkSuccess = () => {
+    try {
+      // Show success message for payment link checkouts
+      toast.success("Payment successful! Your subscription has been activated.");
+      
+      // Clean up the URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.delete("checkout_success");
+      window.history.replaceState({}, "", url.toString());
+      
+    } catch (error) {
+      console.error("Error handling payment link success:", error);
+      toast.error("There was an issue processing your payment. Please contact support if needed.");
     }
   };
 
