@@ -89,8 +89,9 @@ serve(async (req) => {
       // For payment links, the metadata might be in the client_reference_id instead
       // and we might need to look up the user's active domain registration
       if (!session.metadata?.domain_name || !session.metadata?.domain_suffix) {
-        console.log("Metadata not found in session, checking for client_reference_id");
+        console.log("Metadata not found in session, checking for client_reference_id or customer ID");
         
+        // First try to use client_reference_id if available
         if (session.client_reference_id) {
           try {
             // Use the client_reference_id as the user_id
@@ -135,9 +136,120 @@ serve(async (req) => {
               headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
+        } else if (session.customer) {
+          // If no client_reference_id, try to find the user by Stripe customer ID
+          try {
+            console.log(`Looking up user by Stripe customer ID: ${session.customer}`);
+            
+            // First, find the user with this Stripe customer ID
+            const { data: userData, error: userError } = await supabase
+              .from("users")
+              .select("id")
+              .eq("stripe_customer_id", session.customer)
+              .limit(1);
+            
+            if (userError || !userData || userData.length === 0) {
+              // If we can't find a user with this customer ID, try the profiles table
+              const { data: profileData, error: profileError } = await supabase
+                .from("profiles")
+                .select("id")
+                .eq("stripe_customer_id", session.customer)
+                .limit(1);
+                
+              if (profileError || !profileData || profileData.length === 0) {
+                console.error("Could not find user with Stripe customer ID", {
+                  customerId: session.customer,
+                  userError,
+                  profileError
+                });
+                return new Response(JSON.stringify({ error: "User not found for Stripe customer ID" }), {
+                  status: 400,
+                  headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+              }
+              
+              // Use the profile ID as the user ID
+              const userId = profileData[0].id;
+              console.log(`Found user ${userId} from profile with Stripe customer ID ${session.customer}`);
+              
+              // Get the most recent domain registered by this user
+              const { data: domainData, error: domainError } = await supabase
+                .from("domains")
+                .select("*")
+                .eq("user_id", userId)
+                .order("created_at", { ascending: false })
+                .limit(1);
+                
+              if (domainError || !domainData || domainData.length === 0) {
+                console.error("Error finding domain for user", { userId, error: domainError });
+                return new Response(JSON.stringify({ error: "Could not find domain for user" }), {
+                  status: 400,
+                  headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+              }
+              
+              const domain = domainData[0];
+              console.log("Found domain for payment link checkout via profile", {
+                domainId: domain.id,
+                subdomain: domain.subdomain,
+                domainSuffix: domain.settings?.domain_suffix,
+              });
+              
+              // Set the metadata from the found domain
+              session.metadata = {
+                domain_name: domain.subdomain,
+                domain_suffix: domain.settings?.domain_suffix || "com.channel",
+                user_id: userId,
+                checkout_type: "email", // Assume email for payment links
+                include_email: "true"
+              };
+            } else {
+              // Found user with this customer ID
+              const userId = userData[0].id;
+              console.log(`Found user ${userId} with Stripe customer ID ${session.customer}`);
+              
+              // Get the most recent domain registered by this user
+              const { data: domainData, error: domainError } = await supabase
+                .from("domains")
+                .select("*")
+                .eq("user_id", userId)
+                .order("created_at", { ascending: false })
+                .limit(1);
+                
+              if (domainError || !domainData || domainData.length === 0) {
+                console.error("Error finding domain for user", { userId, error: domainError });
+                return new Response(JSON.stringify({ error: "Could not find domain for user" }), {
+                  status: 400,
+                  headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+              }
+              
+              const domain = domainData[0];
+              console.log("Found domain for payment link checkout", {
+                domainId: domain.id,
+                subdomain: domain.subdomain,
+                domainSuffix: domain.settings?.domain_suffix,
+              });
+              
+              // Set the metadata from the found domain
+              session.metadata = {
+                domain_name: domain.subdomain,
+                domain_suffix: domain.settings?.domain_suffix || "com.channel",
+                user_id: userId,
+                checkout_type: "email", // Assume email for payment links
+                include_email: "true"
+              };
+            }
+          } catch (error) {
+            console.error("Error processing payment link checkout with customer ID", error);
+            return new Response(JSON.stringify({ error: "Error processing payment link with customer ID" }), {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
         } else {
-          console.error("Missing required metadata and client_reference_id in checkout session");
-          return new Response(JSON.stringify({ error: "Missing required metadata and client_reference_id" }), {
+          console.error("Missing required metadata, client_reference_id, and customer ID in checkout session");
+          return new Response(JSON.stringify({ error: "Missing required identification information" }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
